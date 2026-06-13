@@ -11,6 +11,8 @@ import AlumnoDetalle from "./pages/AlumnoDetalle.jsx"
 import Reportes from "./pages/Reportes.jsx"
 import Actividades from "./pages/Actividades"
 import Login from "./pages/Login.jsx"
+import TesoreriaActividades from "./pages/TesoreriaActividades"
+import TesoreriaDetalle from "./pages/TesoreriaDetalle"
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -92,6 +94,28 @@ export default function App() {
             <ProtectedRoute user={session}>
               <Layout>
                 <Reportes />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+               <Route
+          path="/tesoreria"
+          element={
+            <ProtectedRoute user={session}>
+              <Layout>
+                <TesoreriaActividades />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tesoreria/:id"
+          element={
+            <ProtectedRoute user={session}>
+              <Layout>
+                <TesoreriaDetalle />
               </Layout>
             </ProtectedRoute>
           }

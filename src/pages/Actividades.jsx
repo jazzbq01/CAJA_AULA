@@ -109,25 +109,53 @@ const aplicarGasto = async () => {
       <h1 style={styles.title}>📉 Actividades (Gastos)</h1>
 
       {/* FORM */}
-      <div style={styles.form}>
-        <input
-          placeholder="Nombre actividad (ej: Paseo, material, etc)"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          style={styles.inputNombre}
-        />
+      <div style={styles.formCard}>
 
-        <input
-          type="number"
-          placeholder="Monto S/"
-          value={monto}
-          onChange={(e) => setMonto(e.target.value)}
-          style={styles.input}
-        />
+        {/* HEADER DEL BLOQUE */}
+        <div style={styles.formHeader}>
+          <div>
+            <h3 style={styles.formTitle}>➕ Registrar actividad</h3>
+            <p style={styles.formSubtitle}>
+              Agrega un gasto que será distribuido automáticamente
+            </p>
+          </div>
+        </div>
 
-        <button onClick={aplicarGasto} style={styles.button}>
-          ➖ Registrar gasto
-        </button>
+        {/* INPUTS */}
+        <div style={styles.formGrid}>
+
+          {/* NOMBRE */}
+          <div style={styles.field}>
+            <label style={styles.label}>Actividad</label>
+            <input
+              placeholder="Ej: Paseo, material, celebración..."
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              style={styles.inputNombre}
+            />
+          </div>
+
+          {/* MONTO */}
+          <div style={styles.field}>
+            <label style={styles.label}>Monto</label>
+            <input
+              type="number"
+              placeholder="S/ 0"
+              value={monto}
+              onChange={(e) => setMonto(e.target.value)}
+              style={styles.input}
+            />
+          </div>
+
+          {/* BOTÓN */}
+          <div style={styles.buttonBox}>
+            <button onClick={aplicarGasto} style={styles.button}>
+              ➖ Registrar gasto
+            </button>
+          </div>
+
+        </div>
+
       </div>
 
       {/* LISTA DE GASTOS */}
@@ -189,7 +217,7 @@ const styles = {
   },
 
   inputNombre: {
-    width: "60%",
+    width: "80%",
     minWidth: "200px",
     padding: 10,
     borderRadius: 8,
@@ -230,4 +258,53 @@ const styles = {
     color: "#6b7280",
     marginTop: 5,
   },
+  formCard: {
+  background: "linear-gradient(135deg, #ffffff, #f8fafc)",
+  padding: 18,
+  borderRadius: 16,
+  boxShadow: "0 10px 25px rgba(0,0,0,0.06)",
+  border: "1px solid #eef2f7",
+  marginBottom: 20,
+},
+
+formHeader: {
+  marginBottom: 12,
+},
+
+formTitle: {
+  margin: 0,
+  fontSize: 18,
+  fontWeight: "bold",
+},
+
+formSubtitle: {
+  margin: 0,
+  fontSize: 12,
+  color: "#6b7280",
+  marginTop: 4,
+},
+
+formGrid: {
+  display: "grid",
+  gridTemplateColumns: "2fr 1fr auto",
+  gap: 12,
+  alignItems: "end",
+},
+
+field: {
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+},
+
+label: {
+  fontSize: 12,
+  fontWeight: "bold",
+  color: "#374151",
+},
+
+buttonBox: {
+  display: "flex",
+  alignItems: "end",
+},
 }

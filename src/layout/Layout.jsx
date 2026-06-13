@@ -65,6 +65,11 @@ export default function Layout({ children }) {
               🧾 Reportes
             </Link>
 
+            <Link onClick={() => setOpen(false)} to="/tesoreria"
+              style={isActive("/tesoreria") ? styles.active : styles.link}>
+              💰 Tesorería
+            </Link>
+
           </nav>
         </div>
 
