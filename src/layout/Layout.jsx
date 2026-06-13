@@ -1,8 +1,10 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useState } from "react"
 
 export default function Layout({ children }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
 
   const isActive = (path) => location.pathname === path
 
@@ -14,33 +16,65 @@ export default function Layout({ children }) {
   return (
     <div style={styles.container}>
 
+      {/* TOPBAR */}
+      <div style={styles.topbar}>
+        <button onClick={() => setOpen(true)} style={styles.menuBtn}>
+          ☰
+        </button>
+
+        <span style={styles.title}>Caja Aula</span>
+      </div>
+
+      {/* OVERLAY */}
+      {open && (
+        <div
+          style={styles.overlay}
+          onClick={() => setOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside style={styles.sidebar}>
-        <div style={styles.logo}>
-          💰 Caja Aula
+      <aside
+        style={{
+          ...styles.sidebar,
+          left: open ? "0" : "-260px",
+        }}
+      >
+        <div style={styles.logo}>💰 Caja Aula</div>
+
+        <div style={styles.navContainer}>
+          <nav style={styles.nav}>
+
+            <Link onClick={() => setOpen(false)} to="/"
+              style={isActive("/") ? styles.active : styles.link}>
+              📊 Dashboard
+            </Link>
+
+            <Link onClick={() => setOpen(false)} to="/alumnos"
+              style={isActive("/alumnos") ? styles.active : styles.link}>
+              👨‍🎓 Alumnos
+            </Link>
+
+            <Link onClick={() => setOpen(false)} to="/actividades"
+              style={isActive("/actividades") ? styles.active : styles.link}>
+              🚨 Actividades
+            </Link>
+
+            <Link onClick={() => setOpen(false)} to="/reportes"
+              style={isActive("/reportes") ? styles.active : styles.link}>
+              🧾 Reportes
+            </Link>
+
+          </nav>
         </div>
 
-        <nav style={styles.nav}>
-          <Link style={isActive("/") ? styles.active : styles.link} to="/">
-            📊 Dashboard
-          </Link>
+        {/* LOGOUT SIEMPRE VISIBLE */}
+        <div style={styles.logoutContainer}>
+          <button onClick={logout} style={styles.logout}>
+            🚪 Cerrar sesión
+          </button>
+        </div>
 
-          <Link style={isActive("/alumnos") ? styles.active : styles.link} to="/alumnos">
-            👨‍🎓 Alumnos
-          </Link>
-
-          <Link style={isActive("/actividades") ? styles.active : styles.link} to="/actividades">
-            🚨 Actividades
-          </Link>
-
-          <Link style={isActive("/reportes") ? styles.active : styles.link} to="/reportes">
-            🧾 Reportes
-          </Link>
-        </nav>
-
-        <button onClick={logout} style={styles.logout}>
-          🚪 Salir
-        </button>
       </aside>
 
       {/* CONTENIDO */}
@@ -52,22 +86,63 @@ export default function Layout({ children }) {
   )
 }
 
-/* 🎨 ESTILOS */
+/* ESTILOS */
 const styles = {
   container: {
-    display: "flex",
-    minHeight: "100vh",
     fontFamily: "Arial",
+    minHeight: "100vh",
     background: "#f1f5f9",
   },
 
+  topbar: {
+    height: 55,
+    background: "#0f172a",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    padding: "0 15px",
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    zIndex: 1000,
+  },
+
+  menuBtn: {
+    fontSize: 22,
+    background: "none",
+    border: "none",
+    color: "white",
+  },
+
+  title: {
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.4)",
+    zIndex: 998,
+  },
+
   sidebar: {
-    width: 220,
+    position: "fixed",
+    top: 55,
+    left: 0,
+    width: 240,
+      height: "calc(100vh - 100px)",
     background: "#0f172a",
     color: "white",
     padding: 20,
     display: "flex",
     flexDirection: "column",
+    transition: "0.3s ease",
+    zIndex: 999,
   },
 
   logo: {
@@ -76,42 +151,51 @@ const styles = {
     marginBottom: 25,
   },
 
+  navContainer: {
+  flex: 1,
+  overflowY: "auto",
+  minHeight: 0, // 🔥 CRÍTICO EN FLEX
+},
+
   nav: {
     display: "flex",
     flexDirection: "column",
     gap: 10,
-    flex: 1,
   },
 
   link: {
     color: "#cbd5e1",
     textDecoration: "none",
-    padding: "10px 12px",
+    padding: 10,
     borderRadius: 8,
-    fontSize: 14,
   },
 
   active: {
     background: "#2563eb",
     color: "white",
-    textDecoration: "none",
-    padding: "10px 12px",
+    padding: 10,
     borderRadius: 8,
-    fontSize: 14,
+    textDecoration: "none",
   },
 
-  main: {
-    flex: 1,
-    padding: 20,
+  logoutContainer: {
+    marginTop: "auto",
+    borderTop: "1px solid rgba(255,255,255,0.15)",
+    paddingTop: 10,
   },
 
   logout: {
-    marginTop: "auto",
+    width: "100%",
     background: "#ef4444",
     color: "white",
     border: "none",
-    padding: "10px",
+    padding: 10,
     borderRadius: 8,
-    cursor: "pointer",
+    fontWeight: "bold",
+  },
+
+  main: {
+    marginTop: 55,
+    padding: 20,
   },
 }
