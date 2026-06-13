@@ -14,6 +14,38 @@ export default function TesoreriaActividades() {
 
   const navigate = useNavigate()
 
+  const getWindowWidth = () => {
+    if (typeof window === "undefined") return 1200
+    return window.innerWidth
+  }
+
+  const [anchoPantalla, setAnchoPantalla] = useState(getWindowWidth())
+
+  useEffect(() => {
+    const handleResize = () => {
+      setAnchoPantalla(getWindowWidth())
+    }
+
+    window.addEventListener("resize", handleResize)
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [])
+
+  const esMovil = anchoPantalla < 640
+  const esTablet = anchoPantalla >= 640 && anchoPantalla < 1024
+
+  const columnasActividades = esMovil
+    ? "1fr"
+    : esTablet
+      ? "repeat(2, minmax(0, 1fr))"
+      : "repeat(3, minmax(0, 1fr))"
+
+  const columnasInfo = esMovil
+    ? "1fr"
+    : "repeat(auto-fit, minmax(140px, 1fr))"
+
   const load = async () => {
     const { data, error } = await supabase
       .from("tesoreria_actividades")
@@ -388,7 +420,6 @@ export default function TesoreriaActividades() {
         }
       }
 
-      // ENCABEZADO MEJORADO
       doc.setFillColor(241, 245, 249)
       doc.roundedRect(14, 12, 182, 42, 3, 3, "F")
 
@@ -412,7 +443,6 @@ export default function TesoreriaActividades() {
 
       currentY = 65
 
-      // FUNCIÓN PARA TABLAS DE DETALLE
       const crearTablaDetalle = (titulo, nota, data, colorHeader) => {
         revisarSaltoPagina(45)
 
@@ -495,7 +525,6 @@ export default function TesoreriaActividades() {
         naranja
       )
 
-      // TABLA CLAVE: LIQUIDACIÓN DEL APORTE DE PADRES
       revisarSaltoPagina(55)
 
       doc.setFontSize(12)
@@ -556,7 +585,6 @@ export default function TesoreriaActividades() {
 
       currentY = doc.lastAutoTable.finalY + 10
 
-      // RESUMEN GENERAL
       revisarSaltoPagina(65)
 
       doc.setFontSize(12)
@@ -615,7 +643,6 @@ export default function TesoreriaActividades() {
 
       currentY = doc.lastAutoTable.finalY + 10
 
-      // ARCHIVOS DE SUSTENTO DE GASTOS Y CAJA CHICA
       revisarSaltoPagina(55)
 
       doc.setFontSize(12)
@@ -781,15 +808,38 @@ export default function TesoreriaActividades() {
   }
 
   return (
-    <div style={styles.container}>
+    <div
+      style={{
+        ...styles.container,
+        padding: esMovil ? 12 : 20
+      }}
+    >
 
-      <div style={styles.header}>
+      <div
+        style={{
+          ...styles.header,
+          flexDirection: esMovil ? "column" : "row",
+          alignItems: esMovil ? "flex-start" : "center"
+        }}
+      >
         <div>
-          <h1 style={styles.title}>💳 Tesorería</h1>
+          <h1
+            style={{
+              ...styles.title,
+              fontSize: esMovil ? 26 : 30
+            }}
+          >
+            💳 Tesorería
+          </h1>
           <p style={styles.subtitle}>Gestión principal de actividades</p>
         </div>
 
-        <div style={styles.headerBadge}>
+        <div
+          style={{
+            ...styles.headerBadge,
+            alignSelf: esMovil ? "flex-start" : "center"
+          }}
+        >
           {actividades.length} actividad{actividades.length === 1 ? "" : "es"}
         </div>
       </div>
@@ -804,12 +854,21 @@ export default function TesoreriaActividades() {
           </div>
         </div>
 
-        <div style={styles.formRow}>
+        <div
+          style={{
+            ...styles.formRow,
+            flexDirection: esMovil ? "column" : "row"
+          }}
+        >
           <input
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             placeholder="Ejemplo: Día de la Madre"
-            style={styles.input}
+            style={{
+              ...styles.input,
+              width: esMovil ? "100%" : "auto",
+              boxSizing: "border-box"
+            }}
           />
 
           <button
@@ -817,6 +876,7 @@ export default function TesoreriaActividades() {
             disabled={loading}
             style={{
               ...styles.button,
+              width: esMovil ? "100%" : "auto",
               opacity: loading ? 0.7 : 1,
               cursor: loading ? "not-allowed" : "pointer"
             }}
@@ -835,9 +895,19 @@ export default function TesoreriaActividades() {
         </div>
       </div>
 
-      <div style={styles.grid}>
+      <div
+        style={{
+          ...styles.grid,
+          gridTemplateColumns: columnasActividades
+        }}
+      >
         {actividades.length === 0 && (
-          <div style={styles.empty}>
+          <div
+            style={{
+              ...styles.empty,
+              gridColumn: "1 / -1"
+            }}
+          >
             No hay actividades registradas.
           </div>
         )}
@@ -861,14 +931,26 @@ export default function TesoreriaActividades() {
                   <input
                     value={nombreEditado}
                     onChange={(e) => setNombreEditado(e.target.value)}
-                    style={styles.input}
+                    style={{
+                      ...styles.input,
+                      width: "100%",
+                      boxSizing: "border-box"
+                    }}
                     placeholder="Nombre de la actividad"
                   />
 
-                  <div style={styles.actions}>
+                  <div
+                    style={{
+                      ...styles.actions,
+                      width: esMovil ? "100%" : "auto"
+                    }}
+                  >
                     <button
                       onClick={() => guardarEdicion(a.id)}
-                      style={styles.saveBtn}
+                      style={{
+                        ...styles.saveBtn,
+                        flex: esMovil ? 1 : "initial"
+                      }}
                     >
                       💾 Guardar
                     </button>
@@ -878,7 +960,10 @@ export default function TesoreriaActividades() {
                         setEditandoId(null)
                         setNombreEditado("")
                       }}
-                      style={styles.cancelBtn}
+                      style={{
+                        ...styles.cancelBtn,
+                        flex: esMovil ? 1 : "initial"
+                      }}
                     >
                       Cancelar
                     </button>
@@ -886,8 +971,13 @@ export default function TesoreriaActividades() {
                 </div>
               ) : (
                 <>
-                  <div style={styles.cardTop}>
-                    <div>
+                  <div
+                    style={{
+                      ...styles.cardTop,
+                      flexDirection: esMovil ? "column" : "row"
+                    }}
+                  >
+                    <div style={{ width: esMovil ? "100%" : "auto" }}>
                       <h3 style={styles.cardTitle}>{a.nombre}</h3>
 
                       <div style={styles.badgeRow}>
@@ -910,7 +1000,14 @@ export default function TesoreriaActividades() {
                       </div>
                     </div>
 
-                    <div style={styles.saldoBox}>
+                    <div
+                      style={{
+                        ...styles.saldoBox,
+                        width: esMovil ? "100%" : "auto",
+                        textAlign: esMovil ? "left" : "right",
+                        boxSizing: "border-box"
+                      }}
+                    >
                       <span style={styles.saldoLabel}>Saldo final</span>
                       <strong style={styles.saldoValue}>
                         S/ {Number(a.saldo_final || 0).toFixed(2)}
@@ -918,7 +1015,12 @@ export default function TesoreriaActividades() {
                     </div>
                   </div>
 
-                  <div style={styles.infoGrid}>
+                  <div
+                    style={{
+                      ...styles.infoGrid,
+                      gridTemplateColumns: columnasInfo
+                    }}
+                  >
                     <div style={styles.infoBox}>
                       <span style={styles.infoLabel}>Ingresos</span>
                       <b style={styles.infoValueGreen}>
@@ -948,17 +1050,31 @@ export default function TesoreriaActividades() {
                     </div>
                   </div>
 
-                  <div style={styles.cardFooter}>
+                  <div
+                    style={{
+                      ...styles.cardFooter,
+                      flexDirection: esMovil ? "column" : "row",
+                      alignItems: esMovil ? "stretch" : "center"
+                    }}
+                  >
                     <div style={styles.helperText}>
                       {estaFinalizada
                         ? "Actividad finalizada. Solo puedes ver el detalle o descargar el reporte."
                         : "Actividad en borrador. Puedes editarla, eliminarla o agregar detalles."}
                     </div>
 
-                    <div style={styles.actions}>
+                    <div
+                      style={{
+                        ...styles.actions,
+                        width: esMovil ? "100%" : "auto"
+                      }}
+                    >
                       <button
                         onClick={() => navigate(`/tesoreria/${a.id}`)}
-                        style={styles.detailBtn}
+                        style={{
+                          ...styles.detailBtn,
+                          flex: esMovil ? 1 : "initial"
+                        }}
                       >
                         👁 Ver detalle
                       </button>
@@ -969,6 +1085,7 @@ export default function TesoreriaActividades() {
                           disabled={generandoPdfId === a.id}
                           style={{
                             ...styles.pdfBtn,
+                            flex: esMovil ? 1 : "initial",
                             opacity: generandoPdfId === a.id ? 0.7 : 1,
                             cursor: generandoPdfId === a.id ? "not-allowed" : "pointer"
                           }}
@@ -981,14 +1098,20 @@ export default function TesoreriaActividades() {
                         <>
                           <button
                             onClick={() => iniciarEdicion(a)}
-                            style={styles.editBtn}
+                            style={{
+                              ...styles.editBtn,
+                              flex: esMovil ? 1 : "initial"
+                            }}
                           >
                             ✏️ Editar
                           </button>
 
                           <button
                             onClick={() => eliminarActividad(a)}
-                            style={styles.deleteBtn}
+                            style={{
+                              ...styles.deleteBtn,
+                              flex: esMovil ? 1 : "initial"
+                            }}
                           >
                             🗑 Eliminar
                           </button>
@@ -1009,7 +1132,6 @@ export default function TesoreriaActividades() {
 
 const styles = {
   container: {
-    padding: 20,
     fontFamily: "Arial"
   },
 
@@ -1017,13 +1139,11 @@ const styles = {
     marginBottom: 22,
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
     gap: 12
   },
 
   title: {
     margin: 0,
-    fontSize: 30,
     color: "#0f172a"
   },
 
@@ -1110,21 +1230,20 @@ const styles = {
     fontSize: 14
   },
 
-grid: {
-  display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(320px, 1fr))",
-  gap: 16,
-  alignItems: "stretch"
-},
+  grid: {
+    display: "grid",
+    gap: 16,
+    alignItems: "stretch"
+  },
 
-card: {
-  background: "white",
-  padding: 18,
-  borderRadius: 16,
-  boxShadow: "0 4px 14px rgba(15, 23, 42, 0.07)",
-  border: "1px solid #e2e8f0",
-  minHeight: 260
-},
+  card: {
+    background: "white",
+    padding: 18,
+    borderRadius: 16,
+    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.07)",
+    border: "1px solid #e2e8f0",
+    minHeight: 260
+  },
 
   cardTop: {
     display: "flex",
@@ -1180,8 +1299,7 @@ card: {
     background: "#f8fafc",
     border: "1px solid #e2e8f0",
     borderRadius: 14,
-    padding: "11px 13px",
-    textAlign: "right"
+    padding: "11px 13px"
   },
 
   saldoLabel: {
@@ -1198,7 +1316,6 @@ card: {
 
   infoGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
     gap: 10,
     marginBottom: 16
   },
@@ -1237,7 +1354,6 @@ card: {
     paddingTop: 14,
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
     gap: 12,
     flexWrap: "wrap"
   },
@@ -1260,7 +1376,8 @@ card: {
     padding: "9px 12px",
     borderRadius: 9,
     cursor: "pointer",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    whiteSpace: "nowrap"
   },
 
   pdfBtn: {
@@ -1270,7 +1387,8 @@ card: {
     padding: "9px 12px",
     borderRadius: 9,
     cursor: "pointer",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    whiteSpace: "nowrap"
   },
 
   editBtn: {
@@ -1280,7 +1398,8 @@ card: {
     padding: "9px 12px",
     borderRadius: 9,
     cursor: "pointer",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    whiteSpace: "nowrap"
   },
 
   deleteBtn: {
@@ -1290,7 +1409,8 @@ card: {
     padding: "9px 12px",
     borderRadius: 9,
     cursor: "pointer",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    whiteSpace: "nowrap"
   },
 
   saveBtn: {

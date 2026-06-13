@@ -416,6 +416,11 @@ export default function TesoreriaMultas() {
   }
 
   const abrirModalPago = (multa) => {
+    if (multa.estado === "PAGADA" || multa.estado === "SUSTENTADA") {
+      alert("Esta multa ya está cerrada")
+      return
+    }
+
     setModal({
       tipo: "PAGO",
       multa
@@ -424,6 +429,11 @@ export default function TesoreriaMultas() {
   }
 
   const abrirModalSustento = (multa) => {
+    if (multa.estado === "PAGADA" || multa.estado === "SUSTENTADA") {
+      alert("Esta multa ya está cerrada")
+      return
+    }
+
     setModal({
       tipo: "SUSTENTO",
       multa
@@ -1136,6 +1146,9 @@ export default function TesoreriaMultas() {
             const estado = getEstadoStyle(multa.estado)
             const pendiente = calcularPendiente(multa)
 
+            const multaCerrada =
+              multa.estado === "PAGADA" || multa.estado === "SUSTENTADA"
+
             return (
               <div key={multa.id} style={styles.multaCard}>
                 <div style={styles.multaTop}>
@@ -1225,21 +1238,40 @@ export default function TesoreriaMultas() {
                     {multa.descripcion || "Sin observación adicional"}
                   </p>
 
-                  <div style={styles.actions}>
-                    <button
-                      onClick={() => abrirModalPago(multa)}
-                      style={styles.payBtn}
-                    >
-                      💰 Registrar pago
-                    </button>
+                  {!multaCerrada ? (
+                    <div style={styles.actions}>
+                      <button
+                        onClick={() => abrirModalPago(multa)}
+                        style={styles.payBtn}
+                      >
+                        💰 Registrar pago
+                      </button>
 
-                    <button
-                      onClick={() => abrirModalSustento(multa)}
-                      style={styles.supportBtn}
-                    >
-                      📎 Registrar sustento
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => abrirModalSustento(multa)}
+                        style={styles.supportBtn}
+                      >
+                        📎 Registrar sustento
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={styles.actions}>
+                      <span
+                        style={{
+                          ...styles.closedBadge,
+                          color: multa.estado === "PAGADA" ? "#166534" : "#6d28d9",
+                          background:
+                            multa.estado === "PAGADA" ? "#dcfce7" : "#ede9fe",
+                          borderColor:
+                            multa.estado === "PAGADA" ? "#86efac" : "#ddd6fe"
+                        }}
+                      >
+                        {multa.estado === "PAGADA"
+                          ? "✅ Multa pagada"
+                          : "📎 Multa sustentada"}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )
@@ -1719,6 +1751,15 @@ const styles = {
     borderRadius: 9,
     fontWeight: "bold",
     cursor: "pointer"
+  },
+
+  closedBadge: {
+    padding: "8px 12px",
+    borderRadius: 999,
+    fontSize: 13,
+    fontWeight: "bold",
+    border: "1px solid",
+    whiteSpace: "nowrap"
   },
 
   overlay: {
