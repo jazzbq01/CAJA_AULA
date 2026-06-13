@@ -2,12 +2,16 @@ import { useEffect, useState } from "react"
 import { supabase } from "../lib/supabase"
 import { useNavigate, useParams } from "react-router-dom"
 
+const BUCKET_COMPROBANTES = "tesoreria-comprobantes_items"
+const MAX_FILE_SIZE_MB = 10
+
 export default function TesoreriaDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
 
   const [actividad, setActividad] = useState(null)
   const [items, setItems] = useState([])
+  const [archivos, setArchivos] = useState([])
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
 
@@ -16,6 +20,12 @@ export default function TesoreriaDetalle() {
   const [categoria, setCategoria] = useState("CUOTA_PADRE")
   const [cantidad, setCantidad] = useState("1")
   const [monto, setMonto] = useState("")
+
+  const [modalArchivo, setModalArchivo] = useState(null)
+  const [archivoFile, setArchivoFile] = useState(null)
+  const [archivoTipo, setArchivoTipo] = useState("BOLETA")
+  const [archivoObservacion, setArchivoObservacion] = useState("")
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -44,8 +54,19 @@ export default function TesoreriaDetalle() {
       alert("No se pudieron cargar los detalles")
     }
 
+    const { data: archivosData, error: archivosError } = await supabase
+      .from("tesoreria_item_archivos")
+      .select("*")
+      .eq("actividad_id", id)
+      .order("created_at", { ascending: false })
+
+    if (archivosError) {
+      console.error("Error al cargar archivos:", archivosError)
+    }
+
     setActividad(act)
     setItems(it || [])
+    setArchivos(archivosData || [])
     setLoading(false)
   }
 
@@ -64,6 +85,48 @@ export default function TesoreriaDetalle() {
 
       return total
     }, 0)
+  }
+
+  const formatoCategoria = (categoria) => {
+    const nombres = {
+      CUOTA_PADRE: "Cuota de padre",
+      DONACION: "Donación",
+      ACTIVIDAD: "Actividad",
+      COMPRA: "Compra",
+      SERVICIO: "Servicio",
+      CAJA_CHICA: "Caja chica",
+      OTROS: "Otros"
+    }
+
+    return nombres[categoria] || categoria
+  }
+
+  const formatoTipoArchivo = (tipoArchivo) => {
+    const nombres = {
+      BOLETA: "Boleta",
+      FACTURA: "Factura",
+      RECIBO: "Recibo",
+      VOUCHER: "Voucher",
+      OTRO: "Otro"
+    }
+
+    return nombres[tipoArchivo] || tipoArchivo
+  }
+
+  const formatoFechaHora = (fecha) => {
+    if (!fecha) return "Sin fecha"
+
+    return new Date(fecha).toLocaleString("es-PE", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  }
+
+  const getArchivosItem = (itemId) => {
+    return archivos.filter((archivo) => archivo.item_id === itemId)
   }
 
   const limpiarFormulario = () => {
@@ -141,6 +204,26 @@ export default function TesoreriaDetalle() {
     const confirmar = confirm("¿Deseas eliminar este detalle?")
     if (!confirmar) return
 
+    const archivosDelItem = getArchivosItem(itemId)
+
+    if (archivosDelItem.length > 0) {
+      const paths = archivosDelItem
+        .map((archivo) => archivo.archivo_path)
+        .filter(Boolean)
+
+      if (paths.length > 0) {
+        const { error: storageError } = await supabase.storage
+          .from(BUCKET_COMPROBANTES)
+          .remove(paths)
+
+        if (storageError) {
+          console.error("Error al eliminar archivos del Storage:", storageError)
+          alert(`No se pudieron eliminar los archivos: ${storageError.message}`)
+          return
+        }
+      }
+    }
+
     const { error } = await supabase
       .from("tesoreria_items")
       .delete()
@@ -155,63 +238,210 @@ export default function TesoreriaDetalle() {
     load()
   }
 
-const finalizarActividad = async () => {
-  if (!actividad) return
+  const finalizarActividad = async () => {
+    if (!actividad) return
 
-  if (items.length === 0) {
-    alert("No puedes finalizar una actividad sin detalles registrados")
-    return
-  }
-
-  const confirmar = confirm(
-    "Al finalizar la actividad ya no podrás agregar, editar ni eliminar detalles. ¿Deseas continuar?"
-  )
-
-  if (!confirmar) return
-
-  let totalIngresos = 0
-  let totalGastos = 0
-  let totalCajaChica = 0
-
-  items.forEach((item) => {
-    const subtotal = Number(item.subtotal || 0)
-
-    if (item.tipo === "INGRESO") {
-      totalIngresos += subtotal
+    if (items.length === 0) {
+      alert("No puedes finalizar una actividad sin detalles registrados")
+      return
     }
 
-    if (item.tipo === "GASTO" && item.categoria !== "CAJA_CHICA") {
-      totalGastos += subtotal
-    }
+    const confirmar = confirm(
+      "Al finalizar la actividad ya no podrás agregar, editar ni eliminar detalles. ¿Deseas continuar?"
+    )
 
-    if (item.categoria === "CAJA_CHICA") {
-      totalCajaChica += subtotal
-    }
-  })
+    if (!confirmar) return
 
-  const saldoFinal = totalIngresos - totalGastos
+    let totalIngresos = 0
+    let totalGastos = 0
+    let totalCajaChica = 0
 
-  const { error } = await supabase
-    .from("tesoreria_actividades")
-    .update({
-      estado: "FINALIZADO",
-      fecha_fin: new Date().toISOString(),
-      total_ingresos: totalIngresos,
-      total_gastos: totalGastos,
-      total_caja_chica: totalCajaChica,
-      saldo_final: saldoFinal,
-      updated_at: new Date().toISOString()
+    items.forEach((item) => {
+      const subtotal = Number(item.subtotal || 0)
+
+      if (item.tipo === "INGRESO") {
+        totalIngresos += subtotal
+      }
+
+      if (item.tipo === "GASTO" && item.categoria !== "CAJA_CHICA") {
+        totalGastos += subtotal
+      }
+
+      if (item.categoria === "CAJA_CHICA") {
+        totalCajaChica += subtotal
+      }
     })
-    .eq("id", id)
 
-  if (error) {
-    console.error("Error al finalizar:", error)
-    alert(`No se pudo finalizar: ${error.message}`)
-    return
+    const saldoFinal = totalIngresos - totalGastos
+
+    const { error } = await supabase
+      .from("tesoreria_actividades")
+      .update({
+        estado: "FINALIZADO",
+        fecha_fin: new Date().toISOString(),
+        total_ingresos: totalIngresos,
+        total_gastos: totalGastos,
+        total_caja_chica: totalCajaChica,
+        saldo_final: saldoFinal,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", id)
+
+    if (error) {
+      console.error("Error al finalizar:", error)
+      alert(`No se pudo finalizar: ${error.message}`)
+      return
+    }
+
+    load()
   }
 
-  load()
-}
+  const abrirModalArchivo = (item) => {
+    if (actividad?.estado === "FINALIZADO") {
+      alert("No se pueden agregar archivos a una actividad finalizada")
+      return
+    }
+
+    setModalArchivo(item)
+    setArchivoFile(null)
+    setArchivoTipo("BOLETA")
+    setArchivoObservacion("")
+  }
+
+  const cerrarModalArchivo = () => {
+    setModalArchivo(null)
+    setArchivoFile(null)
+    setArchivoTipo("BOLETA")
+    setArchivoObservacion("")
+    setSubiendoArchivo(false)
+  }
+
+  const limpiarNombreArchivo = (nombre) => {
+    return nombre
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9.-]/g, "")
+  }
+
+  const subirArchivoItem = async () => {
+    if (!modalArchivo) return
+
+    if (actividad?.estado === "FINALIZADO") {
+      alert("No se pueden agregar archivos a una actividad finalizada")
+      return
+    }
+
+    if (!archivoFile) {
+      alert("Seleccione un archivo")
+      return
+    }
+
+    const sizeMb = archivoFile.size / 1024 / 1024
+
+    if (sizeMb > MAX_FILE_SIZE_MB) {
+      alert(`El archivo no debe superar ${MAX_FILE_SIZE_MB} MB`)
+      return
+    }
+
+    try {
+      setSubiendoArchivo(true)
+
+      const extension = archivoFile.name.split(".").pop() || "archivo"
+      const nombreLimpio = limpiarNombreArchivo(archivoFile.name)
+
+      const filePath = `actividades/${id}/items/${modalArchivo.id}/${Date.now()}-${
+        nombreLimpio || `comprobante.${extension}`
+      }`
+
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET_COMPROBANTES)
+        .upload(filePath, archivoFile, {
+          cacheControl: "3600",
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error("Error al subir archivo:", uploadError)
+        alert(`No se pudo subir el archivo: ${uploadError.message}`)
+        setSubiendoArchivo(false)
+        return
+      }
+
+      const { data } = supabase.storage
+        .from(BUCKET_COMPROBANTES)
+        .getPublicUrl(filePath)
+
+      const publicUrl = data.publicUrl
+
+      const { error: insertError } = await supabase
+        .from("tesoreria_item_archivos")
+        .insert([
+          {
+            item_id: modalArchivo.id,
+            actividad_id: id,
+            tipo_archivo: archivoTipo,
+            nombre_archivo: archivoFile.name,
+            archivo_url: publicUrl,
+            archivo_path: filePath,
+            mime_type: archivoFile.type || null,
+            size_bytes: archivoFile.size,
+            observacion: archivoObservacion.trim() || null
+          }
+        ])
+
+      if (insertError) {
+        console.error("Error al guardar archivo en tabla:", insertError)
+        alert(`El archivo subió, pero no se guardó el registro: ${insertError.message}`)
+        setSubiendoArchivo(false)
+        return
+      }
+
+      setSubiendoArchivo(false)
+      cerrarModalArchivo()
+      load()
+    } catch (error) {
+      setSubiendoArchivo(false)
+      console.error("Error general al subir archivo:", error)
+      alert(`No se pudo subir el archivo: ${error.message}`)
+    }
+  }
+
+  const eliminarArchivoItem = async (archivo) => {
+    if (actividad?.estado === "FINALIZADO") {
+      alert("No se pueden eliminar archivos de una actividad finalizada")
+      return
+    }
+
+    const confirmar = confirm("¿Deseas eliminar este archivo?")
+    if (!confirmar) return
+
+    if (archivo.archivo_path) {
+      const { error: storageError } = await supabase.storage
+        .from(BUCKET_COMPROBANTES)
+        .remove([archivo.archivo_path])
+
+      if (storageError) {
+        console.error("Error al eliminar archivo del Storage:", storageError)
+        alert(`No se pudo eliminar el archivo del Storage: ${storageError.message}`)
+        return
+      }
+    }
+
+    const { error } = await supabase
+      .from("tesoreria_item_archivos")
+      .delete()
+      .eq("id", archivo.id)
+
+    if (error) {
+      console.error("Error al eliminar archivo de tabla:", error)
+      alert(`No se pudo eliminar el registro del archivo: ${error.message}`)
+      return
+    }
+
+    load()
+  }
 
   if (loading) {
     return <div style={styles.container}>Cargando detalle...</div>
@@ -237,20 +467,6 @@ const finalizarActividad = async () => {
     Number(cantidad || 0) > 0 && Number(monto || 0) > 0
       ? Number(cantidad) * Number(monto)
       : 0
-
-  const formatoCategoria = (categoria) => {
-    const nombres = {
-      CUOTA_PADRE: "Cuota de padre",
-      DONACION: "Donación",
-      ACTIVIDAD: "Actividad",
-      COMPRA: "Compra",
-      SERVICIO: "Servicio",
-      CAJA_CHICA: "Caja chica",
-      OTROS: "Otros"
-    }
-
-    return nombres[categoria] || categoria
-  }
 
   const getTipoStyle = (tipo) => {
     return tipo === "INGRESO"
@@ -304,14 +520,23 @@ const finalizarActividad = async () => {
                 <b>{items.length}</b>
               </p>
             </div>
+
+            <div>
+              <span style={styles.labelText}>Archivos adjuntos</span>
+              <p style={styles.valueText}>
+                <b>{archivos.length}</b>
+              </p>
+            </div>
           </div>
         </div>
 
-        {!estaFinalizada && (
-          <button style={styles.finalizarBtn} onClick={finalizarActividad}>
-            🔒 Finalizar actividad
-          </button>
-        )}
+        <div style={styles.headerActions}>
+          {!estaFinalizada && (
+            <button style={styles.finalizarBtn} onClick={finalizarActividad}>
+              🔒 Finalizar actividad
+            </button>
+          )}
+        </div>
       </section>
 
       {!estaFinalizada && (
@@ -451,6 +676,7 @@ const finalizarActividad = async () => {
             const subtotal = Number(item.subtotal || 0)
             const precioUnitario = Number(item.precio_unitario || 0)
             const noAfectaSaldo = item.afecta_saldo === false
+            const archivosItem = getArchivosItem(item.id)
 
             return (
               <div key={item.id} style={styles.itemCard}>
@@ -491,6 +717,12 @@ const finalizarActividad = async () => {
                             No afecta saldo
                           </span>
                         )}
+
+                        {archivosItem.length > 0 && (
+                          <span style={styles.archivoCountBadge}>
+                            📎 {archivosItem.length} archivo{archivosItem.length === 1 ? "" : "s"}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -526,10 +758,80 @@ const finalizarActividad = async () => {
                     </div>
                   </div>
 
+                  <div style={styles.archivosBox}>
+                    <div style={styles.archivosHeader}>
+                      <b>Comprobantes / sustentos</b>
+
+                      {!estaFinalizada && (
+                        <button
+                          style={styles.smallAttachBtn}
+                          onClick={() => abrirModalArchivo(item)}
+                        >
+                          📎 Agregar archivo
+                        </button>
+                      )}
+                    </div>
+
+                    {archivosItem.length === 0 && (
+                      <p style={styles.noFilesText}>
+                        No hay archivos adjuntos para este detalle.
+                      </p>
+                    )}
+
+                    {archivosItem.length > 0 && (
+                      <div style={styles.archivosList}>
+                        {archivosItem.map((archivo) => (
+                          <div key={archivo.id} style={styles.archivoItem}>
+                            <div style={styles.archivoInfo}>
+                              <span style={styles.archivoTipoBadge}>
+                                {formatoTipoArchivo(archivo.tipo_archivo)}
+                              </span>
+
+                              <a
+                                href={archivo.archivo_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={styles.archivoLink}
+                              >
+                                {archivo.nombre_archivo}
+                              </a>
+
+                              <span style={styles.archivoFecha}>
+                                {formatoFechaHora(archivo.created_at)}
+                              </span>
+
+                              {archivo.observacion && (
+                                <p style={styles.archivoObs}>
+                                  {archivo.observacion}
+                                </p>
+                              )}
+                            </div>
+
+                            {!estaFinalizada && (
+                              <button
+                                style={styles.deleteFileBtn}
+                                onClick={() => eliminarArchivoItem(archivo)}
+                              >
+                                Eliminar
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                 </div>
 
                 {!estaFinalizada && (
                   <div style={styles.itemActions}>
+                    <button
+                      style={styles.attachBtn}
+                      onClick={() => abrirModalArchivo(item)}
+                    >
+                      📎 Archivo
+                    </button>
+
                     <button
                       style={styles.deleteBtn}
                       onClick={() => eliminarItem(item.id)}
@@ -544,6 +846,81 @@ const finalizarActividad = async () => {
           })}
         </div>
       </section>
+
+      {modalArchivo && (
+        <div style={styles.overlay}>
+          <div style={styles.modal}>
+            <h2 style={styles.modalTitle}>Agregar comprobante</h2>
+
+            <p style={styles.modalSubtitle}>
+              Detalle: <b>{modalArchivo.descripcion}</b>
+            </p>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Tipo de archivo</label>
+              <select
+                value={archivoTipo}
+                onChange={(e) => setArchivoTipo(e.target.value)}
+                style={styles.input}
+              >
+                <option value="BOLETA">Boleta</option>
+                <option value="FACTURA">Factura</option>
+                <option value="RECIBO">Recibo</option>
+                <option value="VOUCHER">Voucher</option>
+                <option value="OTRO">Otro</option>
+              </select>
+            </div>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Archivo</label>
+              <input
+                type="file"
+                accept="image/*,.pdf,.doc,.docx"
+                onChange={(e) => setArchivoFile(e.target.files?.[0] || null)}
+                style={styles.input}
+              />
+
+              {archivoFile && (
+                <p style={styles.fileHelp}>
+                  Archivo seleccionado: <b>{archivoFile.name}</b>
+                </p>
+              )}
+            </div>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Observación</label>
+              <input
+                value={archivoObservacion}
+                onChange={(e) => setArchivoObservacion(e.target.value)}
+                placeholder="Ejemplo: Boleta por compra de materiales"
+                style={styles.input}
+              />
+            </div>
+
+            <div style={styles.modalActions}>
+              <button
+                onClick={subirArchivoItem}
+                disabled={subiendoArchivo}
+                style={{
+                  ...styles.addBtn,
+                  opacity: subiendoArchivo ? 0.7 : 1,
+                  cursor: subiendoArchivo ? "not-allowed" : "pointer"
+                }}
+              >
+                {subiendoArchivo ? "Subiendo archivo..." : "Guardar archivo"}
+              </button>
+
+              <button
+                onClick={cerrarModalArchivo}
+                disabled={subiendoArchivo}
+                style={styles.cancelBtn}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )
@@ -577,6 +954,12 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     gap: 20
+  },
+
+  headerActions: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap"
   },
 
   title: {
@@ -658,6 +1041,16 @@ const styles = {
 
   addBtn: {
     background: "#2563eb",
+    color: "white",
+    border: "none",
+    padding: "12px 18px",
+    borderRadius: 10,
+    cursor: "pointer",
+    fontWeight: "bold"
+  },
+
+  cancelBtn: {
+    background: "#64748b",
     color: "white",
     border: "none",
     padding: "12px 18px",
@@ -781,6 +1174,16 @@ const styles = {
     border: "1px solid #fde68a"
   },
 
+  archivoCountBadge: {
+    padding: "5px 9px",
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#1d4ed8",
+    background: "#dbeafe",
+    border: "1px solid #bfdbfe"
+  },
+
   amountBox: {
     minWidth: 155,
     textAlign: "right",
@@ -827,11 +1230,122 @@ const styles = {
     fontSize: 14
   },
 
-  itemActions: {
+  archivosBox: {
+    marginTop: 14,
+    border: "1px solid #e2e8f0",
+    background: "#f8fafc",
+    borderRadius: 14,
+    padding: 12
+  },
+
+  archivosHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8
+  },
+
+  smallAttachBtn: {
+    background: "#2563eb",
+    color: "white",
+    border: "none",
+    borderRadius: 8,
+    padding: "7px 10px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: 12
+  },
+
+  noFilesText: {
+    margin: 0,
+    color: "#64748b",
+    fontSize: 13
+  },
+
+  archivosList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8
+  },
+
+  archivoItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+    background: "white",
+    border: "1px solid #e2e8f0",
+    borderRadius: 12,
+    padding: 10
+  },
+
+  archivoInfo: {
     display: "flex",
     alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+    minWidth: 0
+  },
+
+  archivoTipoBadge: {
+    color: "#0f172a",
+    background: "#e2e8f0",
+    border: "1px solid #cbd5e1",
+    borderRadius: 999,
+    padding: "4px 8px",
+    fontSize: 12,
+    fontWeight: "bold"
+  },
+
+  archivoLink: {
+    color: "#2563eb",
+    fontWeight: "bold",
+    fontSize: 14,
+    wordBreak: "break-word"
+  },
+
+  archivoFecha: {
+    color: "#64748b",
+    fontSize: 12
+  },
+
+  archivoObs: {
+    width: "100%",
+    margin: "4px 0 0",
+    color: "#475569",
+    fontSize: 13
+  },
+
+  deleteFileBtn: {
+    background: "#ef4444",
+    color: "white",
+    border: "none",
+    padding: "7px 10px",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontWeight: "bold",
+    whiteSpace: "nowrap"
+  },
+
+  itemActions: {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: 8,
     padding: "0 14px",
     borderLeft: "1px solid #f1f5f9"
+  },
+
+  attachBtn: {
+    background: "#2563eb",
+    color: "white",
+    border: "none",
+    padding: "9px 12px",
+    borderRadius: 10,
+    cursor: "pointer",
+    fontWeight: "bold",
+    whiteSpace: "nowrap"
   },
 
   deleteBtn: {
@@ -843,5 +1357,50 @@ const styles = {
     cursor: "pointer",
     fontWeight: "bold",
     whiteSpace: "nowrap"
+  },
+
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15, 23, 42, 0.55)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 3000,
+    padding: 20
+  },
+
+  modal: {
+    background: "white",
+    borderRadius: 16,
+    padding: 22,
+    width: "100%",
+    maxWidth: 520,
+    boxShadow: "0 20px 50px rgba(0,0,0,0.25)"
+  },
+
+  modalTitle: {
+    margin: 0,
+    fontSize: 22,
+    color: "#0f172a"
+  },
+
+  modalSubtitle: {
+    color: "#64748b",
+    fontSize: 14,
+    margin: "8px 0 16px"
+  },
+
+  modalActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: 16
+  },
+
+  fileHelp: {
+    margin: "6px 0 0",
+    color: "#64748b",
+    fontSize: 13
   }
 }

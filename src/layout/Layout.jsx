@@ -70,6 +70,11 @@ export default function Layout({ children }) {
               💰 Tesorería
             </Link>
 
+            <Link onClick={() => setOpen(false)} to="/tesoreriamultas"
+              style={isActive("/tesoreriamultas") ? styles.active : styles.link}>
+              💰 Tesorería multas
+            </Link>
+
           </nav>
         </div>
 

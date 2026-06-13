@@ -167,356 +167,618 @@ export default function TesoreriaActividades() {
     return nombres[categoria] || categoria
   }
 
-const descargarPdf = async (actividad) => {
-  if (actividad.estado !== "FINALIZADO") {
-    alert("Solo se puede generar PDF de actividades finalizadas")
-    return
-  }
-
-  setGenerandoPdfId(actividad.id)
-
-  const { data: items, error } = await supabase
-    .from("tesoreria_items")
-    .select("*")
-    .eq("actividad_id", actividad.id)
-    .order("created_at", { ascending: true })
-
-  setGenerandoPdfId(null)
-
-  if (error) {
-    console.error("Error al cargar items para PDF:", error)
-    alert("No se pudo generar el PDF")
-    return
-  }
-
-  const listaItems = items || []
-
-  const aportesPadres = listaItems.filter(
-    (item) => item.tipo === "INGRESO" && item.categoria === "CUOTA_PADRE"
-  )
-
-  const colaboraciones = listaItems.filter(
-    (item) =>
-      item.tipo === "INGRESO" &&
-      item.categoria !== "CUOTA_PADRE"
-  )
-
-  const gastosDeducibles = listaItems.filter(
-    (item) =>
-      item.tipo === "GASTO" &&
-      item.categoria !== "CAJA_CHICA"
-  )
-
-  const cajaChica = listaItems.filter(
-    (item) => item.categoria === "CAJA_CHICA"
-  )
-
-  const totalAportesPadres = aportesPadres.reduce(
-    (total, item) => total + Number(item.subtotal || 0),
-    0
-  )
-
-  const totalColaboraciones = colaboraciones.reduce(
-    (total, item) => total + Number(item.subtotal || 0),
-    0
-  )
-
-  const totalGastosDeducibles = gastosDeducibles.reduce(
-    (total, item) => total + Number(item.subtotal || 0),
-    0
-  )
-
-  const totalCajaChica = cajaChica.reduce(
-    (total, item) => total + Number(item.subtotal || 0),
-    0
-  )
-
-  const saldoAportePadres = totalAportesPadres - totalGastosDeducibles
-
-  const totalGeneralMovimientos =
-    totalAportesPadres +
-    totalColaboraciones +
-    totalGastosDeducibles +
-    totalCajaChica
-
-  const doc = new jsPDF()
-
-  const azulOscuro = [15, 23, 42]
-  const azul = [37, 99, 235]
-  const verde = [22, 163, 74]
-  const rojo = [220, 38, 38]
-  const naranja = [180, 83, 9]
-  const grisClaro = [248, 250, 252]
-
-  const revisarSaltoPagina = (alturaNecesaria = 40) => {
-    if (currentY + alturaNecesaria > 275) {
-      doc.addPage()
-      currentY = 20
+  const formatoTipoArchivo = (tipoArchivo) => {
+    const nombres = {
+      BOLETA: "Boleta",
+      FACTURA: "Factura",
+      RECIBO: "Recibo",
+      VOUCHER: "Voucher",
+      OTRO: "Otro"
     }
+
+    return nombres[tipoArchivo] || tipoArchivo || "Archivo"
   }
 
-  const formatoSoles = (monto) => {
-    return `S/ ${Number(monto || 0).toFixed(2)}`
-  }
+  const descargarPdf = async (actividad) => {
+    if (actividad.estado !== "FINALIZADO") {
+      alert("Solo se puede generar PDF de actividades finalizadas")
+      return
+    }
 
-  let currentY = 18
+    setGenerandoPdfId(actividad.id)
 
-  // ENCABEZADO MEJORADO
-  doc.setFillColor(241, 245, 249)
-  doc.roundedRect(14, 12, 182, 42, 3, 3, "F")
+    try {
+      const { data: items, error } = await supabase
+        .from("tesoreria_items")
+        .select("*")
+        .eq("actividad_id", actividad.id)
+        .order("created_at", { ascending: true })
 
-  doc.setDrawColor(226, 232, 240)
-  doc.roundedRect(14, 12, 182, 42, 3, 3, "S")
+      if (error) {
+        console.error("Error al cargar items para PDF:", error)
+        alert("No se pudo generar el PDF")
+        setGenerandoPdfId(null)
+        return
+      }
 
-  doc.setFontSize(16)
-  doc.setTextColor(15, 23, 42)
-  doc.text("Reporte de Tesorería Escolar", 20, 24)
+      const { data: archivosData, error: archivosError } = await supabase
+        .from("tesoreria_item_archivos")
+        .select("*")
+        .eq("actividad_id", actividad.id)
+        .order("created_at", { ascending: true })
 
-  doc.setFontSize(10)
-  doc.setTextColor(51, 65, 85)
-  doc.text(`Actividad: ${actividad.nombre}`, 20, 34)
-  doc.text(`Estado: ${actividad.estado}`, 20, 41)
-  doc.text(
-    `Fecha inicio: ${formatearFecha(actividad.fecha_inicio || actividad.created_at)}`,
-    112,
-    34
-  )
-  doc.text(`Fecha fin: ${formatearFecha(actividad.fecha_fin)}`, 112, 41)
+      if (archivosError) {
+        console.error("Error al cargar archivos para PDF:", archivosError)
+        alert("No se pudieron cargar los archivos de sustento")
+        setGenerandoPdfId(null)
+        return
+      }
 
-  currentY = 65
+      const listaItems = items || []
+      const listaArchivos = archivosData || []
 
-  // FUNCIÓN PARA TABLAS DE DETALLE
-  const crearTablaDetalle = (titulo, nota, data, colorHeader) => {
-    revisarSaltoPagina(45)
+      const aportesPadres = listaItems.filter(
+        (item) => item.tipo === "INGRESO" && item.categoria === "CUOTA_PADRE"
+      )
 
-    doc.setFontSize(12)
-    doc.setTextColor(15, 23, 42)
-    doc.text(titulo, 14, currentY)
+      const colaboraciones = listaItems.filter(
+        (item) =>
+          item.tipo === "INGRESO" &&
+          item.categoria !== "CUOTA_PADRE"
+      )
 
-    currentY += 5
+      const gastosDeducibles = listaItems.filter(
+        (item) =>
+          item.tipo === "GASTO" &&
+          item.categoria !== "CAJA_CHICA"
+      )
 
-    if (nota) {
+      const cajaChica = listaItems.filter(
+        (item) => item.categoria === "CAJA_CHICA"
+      )
+
+      const itemsConSustento = listaItems.filter(
+        (item) => item.tipo === "GASTO" || item.categoria === "CAJA_CHICA"
+      )
+
+      const totalAportesPadres = aportesPadres.reduce(
+        (total, item) => total + Number(item.subtotal || 0),
+        0
+      )
+
+      const totalColaboraciones = colaboraciones.reduce(
+        (total, item) => total + Number(item.subtotal || 0),
+        0
+      )
+
+      const totalGastosDeducibles = gastosDeducibles.reduce(
+        (total, item) => total + Number(item.subtotal || 0),
+        0
+      )
+
+      const totalCajaChica = cajaChica.reduce(
+        (total, item) => total + Number(item.subtotal || 0),
+        0
+      )
+
+      const saldoAportePadres = totalAportesPadres - totalGastosDeducibles
+
+      const totalGeneralMovimientos =
+        totalAportesPadres +
+        totalColaboraciones +
+        totalGastosDeducibles +
+        totalCajaChica
+
+      const doc = new jsPDF()
+
+      const azulOscuro = [15, 23, 42]
+      const azul = [37, 99, 235]
+      const verde = [22, 163, 74]
+      const rojo = [220, 38, 38]
+      const naranja = [180, 83, 9]
+      const morado = [109, 40, 217]
+      const grisClaro = [248, 250, 252]
+
+      let currentY = 18
+
+      const revisarSaltoPagina = (alturaNecesaria = 40) => {
+        if (currentY + alturaNecesaria > 275) {
+          doc.addPage()
+          currentY = 20
+        }
+      }
+
+      const formatoSoles = (monto) => {
+        return `S/ ${Number(monto || 0).toFixed(2)}`
+      }
+
+      const getArchivosItem = (itemId) => {
+        return listaArchivos.filter((archivo) => archivo.item_id === itemId)
+      }
+
+      const esImagenArchivo = (archivo) => {
+        const mime = archivo.mime_type || ""
+        const nombre = archivo.nombre_archivo || archivo.archivo_url || ""
+
+        return (
+          mime.startsWith("image/") ||
+          /\.(jpg|jpeg|png|webp)$/i.test(nombre)
+        )
+      }
+
+      const getFormatoImagenPdf = (archivo) => {
+        const mime = archivo.mime_type || ""
+        const nombre = archivo.nombre_archivo || archivo.archivo_url || ""
+
+        if (mime.includes("png") || /\.png$/i.test(nombre)) return "PNG"
+        if (mime.includes("webp") || /\.webp$/i.test(nombre)) return "WEBP"
+
+        return "JPEG"
+      }
+
+      const cargarImagenComoDataUrl = async (url) => {
+        const response = await fetch(url)
+
+        if (!response.ok) {
+          throw new Error("No se pudo cargar la imagen")
+        }
+
+        const blob = await response.blob()
+
+        return await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+
+          reader.onloadend = () => resolve(reader.result)
+          reader.onerror = reject
+          reader.readAsDataURL(blob)
+        })
+      }
+
+      const agregarImagenAlPdf = async (archivo) => {
+        try {
+          const dataUrl = await cargarImagenComoDataUrl(archivo.archivo_url)
+          const props = doc.getImageProperties(dataUrl)
+
+          let imageWidth = 90
+          let imageHeight = (props.height * imageWidth) / props.width
+
+          if (imageHeight > 65) {
+            imageHeight = 65
+            imageWidth = (props.width * imageHeight) / props.height
+          }
+
+          revisarSaltoPagina(imageHeight + 22)
+
+          doc.setFontSize(8)
+          doc.setTextColor(71, 85, 105)
+
+          const tituloImagen = doc.splitTextToSize(
+            `${formatoTipoArchivo(archivo.tipo_archivo)}: ${archivo.nombre_archivo}`,
+            170
+          )
+
+          doc.text(tituloImagen, 18, currentY)
+          currentY += tituloImagen.length * 4 + 2
+
+          doc.addImage(
+            dataUrl,
+            getFormatoImagenPdf(archivo),
+            18,
+            currentY,
+            imageWidth,
+            imageHeight
+          )
+
+          currentY += imageHeight + 6
+        } catch (imageError) {
+          console.error("No se pudo insertar imagen en PDF:", imageError)
+
+          revisarSaltoPagina(18)
+
+          doc.setFontSize(8)
+          doc.setTextColor(185, 28, 28)
+
+          const textoError = doc.splitTextToSize(
+            `No se pudo insertar la imagen "${archivo.nombre_archivo}". Revisar archivo en URL: ${archivo.archivo_url}`,
+            175
+          )
+
+          doc.text(textoError, 18, currentY)
+          currentY += textoError.length * 4 + 4
+        }
+      }
+
+      // ENCABEZADO MEJORADO
+      doc.setFillColor(241, 245, 249)
+      doc.roundedRect(14, 12, 182, 42, 3, 3, "F")
+
+      doc.setDrawColor(226, 232, 240)
+      doc.roundedRect(14, 12, 182, 42, 3, 3, "S")
+
+      doc.setFontSize(16)
+      doc.setTextColor(15, 23, 42)
+      doc.text("Reporte de Tesorería Escolar", 20, 24)
+
+      doc.setFontSize(10)
+      doc.setTextColor(51, 65, 85)
+      doc.text(`Actividad: ${actividad.nombre}`, 20, 34)
+      doc.text(`Estado: ${actividad.estado}`, 20, 41)
+      doc.text(
+        `Fecha inicio: ${formatearFecha(actividad.fecha_inicio || actividad.created_at)}`,
+        112,
+        34
+      )
+      doc.text(`Fecha fin: ${formatearFecha(actividad.fecha_fin)}`, 112, 41)
+
+      currentY = 65
+
+      // FUNCIÓN PARA TABLAS DE DETALLE
+      const crearTablaDetalle = (titulo, nota, data, colorHeader) => {
+        revisarSaltoPagina(45)
+
+        doc.setFontSize(12)
+        doc.setTextColor(15, 23, 42)
+        doc.text(titulo, 14, currentY)
+
+        currentY += 5
+
+        if (nota) {
+          doc.setFontSize(8.5)
+          doc.setTextColor(71, 85, 105)
+
+          const notaCortada = doc.splitTextToSize(nota, 180)
+          doc.text(notaCortada, 14, currentY)
+
+          currentY += notaCortada.length * 4 + 3
+        }
+
+        autoTable(doc, {
+          startY: currentY,
+          head: [["#", "Descripción", "Categoría", "Cant.", "P. Unit.", "Subtotal"]],
+          body:
+            data.length > 0
+              ? data.map((item, index) => [
+                  index + 1,
+                  item.descripcion || "-",
+                  formatoCategoria(item.categoria),
+                  item.cantidad,
+                  formatoSoles(item.precio_unitario),
+                  formatoSoles(item.subtotal)
+                ])
+              : [["-", "Sin registros", "-", "-", "-", formatoSoles(0)]],
+          styles: {
+            fontSize: 8.5,
+            cellPadding: 2.5
+          },
+          headStyles: {
+            fillColor: colorHeader,
+            textColor: [255, 255, 255],
+            fontStyle: "bold"
+          },
+          alternateRowStyles: {
+            fillColor: [248, 250, 252]
+          },
+          margin: {
+            left: 14,
+            right: 14
+          }
+        })
+
+        currentY = doc.lastAutoTable.finalY + 10
+      }
+
+      crearTablaDetalle(
+        "1. Aportes de padres",
+        "Ingresos recibidos por cuotas o aportes directos de los padres de familia.",
+        aportesPadres,
+        verde
+      )
+
+      crearTablaDetalle(
+        "2. Colaboraciones, donaciones y otros ingresos",
+        "Ingresos adicionales. Se informan aparte para no mezclarlos con el cálculo principal del aporte de padres.",
+        colaboraciones,
+        azul
+      )
+
+      crearTablaDetalle(
+        "3. Gastos deducibles del aporte de padres",
+        "Gastos que sí se descuentan del dinero recaudado por aportes de padres.",
+        gastosDeducibles,
+        rojo
+      )
+
+      crearTablaDetalle(
+        "4. Caja chica",
+        "La caja chica se registra como movimiento de control, pero no se descuenta del saldo del aporte de padres.",
+        cajaChica,
+        naranja
+      )
+
+      // TABLA CLAVE: LIQUIDACIÓN DEL APORTE DE PADRES
+      revisarSaltoPagina(55)
+
+      doc.setFontSize(12)
+      doc.setTextColor(15, 23, 42)
+      doc.text("5. Liquidación del aporte de padres", 14, currentY)
+
+      currentY += 6
+
+      autoTable(doc, {
+        startY: currentY,
+        head: [["Concepto", "Operación", "Monto"]],
+        body: [
+          [
+            "Total aportes de padres",
+            "Ingreso base",
+            formatoSoles(totalAportesPadres)
+          ],
+          [
+            "Gastos deducibles",
+            "Se resta",
+            `- ${formatoSoles(totalGastosDeducibles)}`
+          ],
+          [
+            "Saldo que queda del aporte de padres",
+            "Resultado",
+            formatoSoles(saldoAportePadres)
+          ]
+        ],
+        styles: {
+          fontSize: 10,
+          cellPadding: 3
+        },
+        headStyles: {
+          fillColor: azulOscuro,
+          textColor: [255, 255, 255],
+          fontStyle: "bold"
+        },
+        margin: {
+          left: 14,
+          right: 14
+        },
+        didParseCell: function (data) {
+          if (data.section === "body" && data.row.index === 0) {
+            data.cell.styles.textColor = [22, 101, 52]
+          }
+
+          if (data.section === "body" && data.row.index === 1) {
+            data.cell.styles.textColor = [185, 28, 28]
+          }
+
+          if (data.section === "body" && data.row.index === 2) {
+            data.cell.styles.fontStyle = "bold"
+            data.cell.styles.fillColor = [220, 252, 231]
+            data.cell.styles.textColor = [22, 101, 52]
+          }
+        }
+      })
+
+      currentY = doc.lastAutoTable.finalY + 10
+
+      // RESUMEN GENERAL
+      revisarSaltoPagina(65)
+
+      doc.setFontSize(12)
+      doc.setTextColor(15, 23, 42)
+      doc.text("6. Resumen general del reporte", 14, currentY)
+
+      currentY += 6
+
+      autoTable(doc, {
+        startY: currentY,
+        head: [["Resumen", "Monto"]],
+        body: [
+          ["Total aportes de padres", formatoSoles(totalAportesPadres)],
+          ["Total gastos deducibles", formatoSoles(totalGastosDeducibles)],
+          ["Saldo disponible del aporte de padres", formatoSoles(saldoAportePadres)],
+          ["Total colaboraciones / donaciones", formatoSoles(totalColaboraciones)],
+          ["Total caja chica", formatoSoles(totalCajaChica)],
+          ["Total general de movimientos registrados", formatoSoles(totalGeneralMovimientos)]
+        ],
+        styles: {
+          fontSize: 10,
+          cellPadding: 3
+        },
+        headStyles: {
+          fillColor: azulOscuro,
+          textColor: [255, 255, 255],
+          fontStyle: "bold"
+        },
+        margin: {
+          left: 14,
+          right: 14
+        },
+        didParseCell: function (data) {
+          if (data.section === "body" && data.row.index === 2) {
+            data.cell.styles.fontStyle = "bold"
+            data.cell.styles.fillColor = [220, 252, 231]
+            data.cell.styles.textColor = [22, 101, 52]
+          }
+
+          if (data.section === "body" && data.row.index === 3) {
+            data.cell.styles.fillColor = [239, 246, 255]
+            data.cell.styles.textColor = [30, 64, 175]
+          }
+
+          if (data.section === "body" && data.row.index === 4) {
+            data.cell.styles.fillColor = [254, 243, 199]
+            data.cell.styles.textColor = [146, 64, 14]
+          }
+
+          if (data.section === "body" && data.row.index === 5) {
+            data.cell.styles.fontStyle = "bold"
+            data.cell.styles.fillColor = grisClaro
+          }
+        }
+      })
+
+      currentY = doc.lastAutoTable.finalY + 10
+
+      // ARCHIVOS DE SUSTENTO DE GASTOS Y CAJA CHICA
+      revisarSaltoPagina(55)
+
+      doc.setFontSize(12)
+      doc.setTextColor(15, 23, 42)
+      doc.text("7. Sustentos de gastos y caja chica", 14, currentY)
+
+      currentY += 5
+
       doc.setFontSize(8.5)
       doc.setTextColor(71, 85, 105)
 
-      const notaCortada = doc.splitTextToSize(nota, 180)
-      doc.text(notaCortada, 14, currentY)
+      const notaSustentos = doc.splitTextToSize(
+        "Se muestran los comprobantes, boletas, facturas, recibos o vouchers adjuntados a los detalles registrados como gastos o caja chica.",
+        180
+      )
 
-      currentY += notaCortada.length * 4 + 3
-    }
+      doc.text(notaSustentos, 14, currentY)
+      currentY += notaSustentos.length * 4 + 4
 
-    autoTable(doc, {
-      startY: currentY,
-      head: [["#", "Descripción", "Categoría", "Cant.", "P. Unit.", "Subtotal"]],
-      body:
-        data.length > 0
-          ? data.map((item, index) => [
-              index + 1,
-              item.descripcion || "-",
-              formatoCategoria(item.categoria),
-              item.cantidad,
-              formatoSoles(item.precio_unitario),
-              formatoSoles(item.subtotal)
-            ])
-          : [["-", "Sin registros", "-", "-", "-", formatoSoles(0)]],
-      styles: {
-        fontSize: 8.5,
-        cellPadding: 2.5
-      },
-      headStyles: {
-        fillColor: colorHeader,
-        textColor: [255, 255, 255],
-        fontStyle: "bold"
-      },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252]
-      },
-      margin: {
-        left: 14,
-        right: 14
+      const itemsConArchivos = itemsConSustento.filter(
+        (item) => getArchivosItem(item.id).length > 0
+      )
+
+      if (itemsConArchivos.length === 0) {
+        autoTable(doc, {
+          startY: currentY,
+          head: [["Detalle", "Resultado"]],
+          body: [["Gastos y caja chica", "No se registraron archivos de sustento"]],
+          styles: {
+            fontSize: 9,
+            cellPadding: 3
+          },
+          headStyles: {
+            fillColor: morado,
+            textColor: [255, 255, 255],
+            fontStyle: "bold"
+          },
+          margin: {
+            left: 14,
+            right: 14
+          }
+        })
+
+        currentY = doc.lastAutoTable.finalY + 10
       }
-    })
 
-    currentY = doc.lastAutoTable.finalY + 10
+      for (const item of itemsConArchivos) {
+        const archivosItem = getArchivosItem(item.id)
+
+        revisarSaltoPagina(65)
+
+        doc.setFillColor(248, 250, 252)
+        doc.roundedRect(14, currentY, 182, 18, 3, 3, "F")
+
+        doc.setDrawColor(226, 232, 240)
+        doc.roundedRect(14, currentY, 182, 18, 3, 3, "S")
+
+        doc.setFontSize(10)
+        doc.setTextColor(15, 23, 42)
+        doc.text(item.descripcion || "Detalle sin descripción", 18, currentY + 7)
+
+        doc.setFontSize(8)
+        doc.setTextColor(71, 85, 105)
+        doc.text(
+          `${formatoCategoria(item.categoria)} | ${formatoSoles(item.subtotal)} | Archivos: ${archivosItem.length}`,
+          18,
+          currentY + 14
+        )
+
+        currentY += 24
+
+        autoTable(doc, {
+          startY: currentY,
+          head: [["Tipo", "Archivo", "Observación", "URL"]],
+          body: archivosItem.map((archivo) => [
+            formatoTipoArchivo(archivo.tipo_archivo),
+            archivo.nombre_archivo || "-",
+            archivo.observacion || "-",
+            archivo.archivo_url || "-"
+          ]),
+          styles: {
+            fontSize: 7,
+            cellPadding: 2,
+            overflow: "linebreak"
+          },
+          columnStyles: {
+            0: { cellWidth: 22 },
+            1: { cellWidth: 42 },
+            2: { cellWidth: 45 },
+            3: { cellWidth: 67 }
+          },
+          headStyles: {
+            fillColor: morado,
+            textColor: [255, 255, 255],
+            fontStyle: "bold"
+          },
+          alternateRowStyles: {
+            fillColor: [248, 250, 252]
+          },
+          margin: {
+            left: 14,
+            right: 14
+          }
+        })
+
+        currentY = doc.lastAutoTable.finalY + 8
+
+        const imagenesItem = archivosItem.filter(esImagenArchivo)
+
+        if (imagenesItem.length > 0) {
+          revisarSaltoPagina(20)
+
+          doc.setFontSize(9)
+          doc.setTextColor(15, 23, 42)
+          doc.text("Vista previa de imágenes:", 18, currentY)
+
+          currentY += 6
+
+          for (const archivo of imagenesItem) {
+            await agregarImagenAlPdf(archivo)
+          }
+        }
+
+        currentY += 4
+      }
+
+      revisarSaltoPagina(30)
+
+      doc.setFontSize(9)
+      doc.setTextColor(51, 65, 85)
+
+      const notaFinal = doc.splitTextToSize(
+        "Nota: El saldo que queda del aporte de padres se obtiene restando únicamente los gastos deducibles al total aportado por los padres. Las colaboraciones, donaciones y caja chica se presentan en bloques separados para mantener claridad contable. Los sustentos de gastos y caja chica se incluyen como evidencia documental del movimiento registrado.",
+        180
+      )
+
+      doc.text(notaFinal, 14, currentY)
+
+      currentY += notaFinal.length * 5 + 5
+
+      doc.setFontSize(11)
+      doc.setTextColor(15, 23, 42)
+      doc.text(
+        `Saldo que queda del aporte de padres: ${formatoSoles(saldoAportePadres)}`,
+        14,
+        currentY
+      )
+
+      const nombreArchivo = `reporte-${actividad.nombre}`
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replaceAll(" ", "-")
+        .replace(/[^\w-]/g, "")
+
+      doc.save(`${nombreArchivo}.pdf`)
+      setGenerandoPdfId(null)
+    } catch (error) {
+      console.error("Error general al generar PDF:", error)
+      alert(`No se pudo generar el PDF: ${error.message}`)
+      setGenerandoPdfId(null)
+    }
   }
-
-  crearTablaDetalle(
-    "1. Aportes de padres",
-    "Ingresos recibidos por cuotas o aportes directos de los padres de familia.",
-    aportesPadres,
-    verde
-  )
-
-  crearTablaDetalle(
-    "2. Colaboraciones, donaciones y otros ingresos",
-    "Ingresos adicionales. Se informan aparte para no mezclarlos con el cálculo principal del aporte de padres.",
-    colaboraciones,
-    azul
-  )
-
-  crearTablaDetalle(
-    "3. Gastos deducibles del aporte de padres",
-    "Gastos que sí se descuentan del dinero recaudado por aportes de padres.",
-    gastosDeducibles,
-    rojo
-  )
-
-  crearTablaDetalle(
-    "4. Caja chica",
-    "La caja chica se registra como movimiento de control, pero no se descuenta del saldo del aporte de padres.",
-    cajaChica,
-    naranja
-  )
-
-  // TABLA CLAVE: LIQUIDACIÓN DEL APORTE DE PADRES
-  revisarSaltoPagina(55)
-
-  doc.setFontSize(12)
-  doc.setTextColor(15, 23, 42)
-  doc.text("5. Liquidación del aporte de padres", 14, currentY)
-
-  currentY += 6
-
-  autoTable(doc, {
-    startY: currentY,
-    head: [["Concepto", "Operación", "Monto"]],
-    body: [
-      [
-        "Total aportes de padres",
-        "Ingreso base",
-        formatoSoles(totalAportesPadres)
-      ],
-      [
-        "Gastos deducibles",
-        "Se resta",
-        `- ${formatoSoles(totalGastosDeducibles)}`
-      ],
-      [
-        "Saldo que queda del aporte de padres",
-        "Resultado",
-        formatoSoles(saldoAportePadres)
-      ]
-    ],
-    styles: {
-      fontSize: 10,
-      cellPadding: 3
-    },
-    headStyles: {
-      fillColor: azulOscuro,
-      textColor: [255, 255, 255],
-      fontStyle: "bold"
-    },
-    margin: {
-      left: 14,
-      right: 14
-    },
-    didParseCell: function (data) {
-      if (data.section === "body" && data.row.index === 0) {
-        data.cell.styles.textColor = [22, 101, 52]
-      }
-
-      if (data.section === "body" && data.row.index === 1) {
-        data.cell.styles.textColor = [185, 28, 28]
-      }
-
-      if (data.section === "body" && data.row.index === 2) {
-        data.cell.styles.fontStyle = "bold"
-        data.cell.styles.fillColor = [220, 252, 231]
-        data.cell.styles.textColor = [22, 101, 52]
-      }
-    }
-  })
-
-  currentY = doc.lastAutoTable.finalY + 10
-
-  // RESUMEN GENERAL
-  revisarSaltoPagina(65)
-
-  doc.setFontSize(12)
-  doc.setTextColor(15, 23, 42)
-  doc.text("6. Resumen general del reporte", 14, currentY)
-
-  currentY += 6
-
-  autoTable(doc, {
-    startY: currentY,
-    head: [["Resumen", "Monto"]],
-    body: [
-      ["Total aportes de padres", formatoSoles(totalAportesPadres)],
-      ["Total gastos deducibles", formatoSoles(totalGastosDeducibles)],
-      ["Saldo disponible del aporte de padres", formatoSoles(saldoAportePadres)],
-      ["Total colaboraciones / donaciones", formatoSoles(totalColaboraciones)],
-      ["Total caja chica", formatoSoles(totalCajaChica)],
-      ["Total general de movimientos registrados", formatoSoles(totalGeneralMovimientos)]
-    ],
-    styles: {
-      fontSize: 10,
-      cellPadding: 3
-    },
-    headStyles: {
-      fillColor: azulOscuro,
-      textColor: [255, 255, 255],
-      fontStyle: "bold"
-    },
-    margin: {
-      left: 14,
-      right: 14
-    },
-    didParseCell: function (data) {
-      if (data.section === "body" && data.row.index === 2) {
-        data.cell.styles.fontStyle = "bold"
-        data.cell.styles.fillColor = [220, 252, 231]
-        data.cell.styles.textColor = [22, 101, 52]
-      }
-
-      if (data.section === "body" && data.row.index === 3) {
-        data.cell.styles.fillColor = [239, 246, 255]
-        data.cell.styles.textColor = [30, 64, 175]
-      }
-
-      if (data.section === "body" && data.row.index === 4) {
-        data.cell.styles.fillColor = [254, 243, 199]
-        data.cell.styles.textColor = [146, 64, 14]
-      }
-
-      if (data.section === "body" && data.row.index === 5) {
-        data.cell.styles.fontStyle = "bold"
-        data.cell.styles.fillColor = grisClaro
-      }
-    }
-  })
-
-  currentY = doc.lastAutoTable.finalY + 10
-
-  revisarSaltoPagina(30)
-
-  doc.setFontSize(9)
-  doc.setTextColor(51, 65, 85)
-
-  const notaFinal = doc.splitTextToSize(
-    "Nota: El saldo que queda del aporte de padres se obtiene restando únicamente los gastos deducibles al total aportado por los padres. Las colaboraciones, donaciones y caja chica se presentan en bloques separados para mantener claridad contable.",
-    180
-  )
-
-  doc.text(notaFinal, 14, currentY)
-
-  currentY += notaFinal.length * 5 + 5
-
-  doc.setFontSize(11)
-  doc.setTextColor(15, 23, 42)
-  doc.text(
-    `Saldo que queda del aporte de padres: ${formatoSoles(saldoAportePadres)}`,
-    14,
-    currentY
-  )
-
-  const nombreArchivo = `reporte-${actividad.nombre}`
-    .toLowerCase()
-    .replaceAll(" ", "-")
-    .replace(/[^\w-]/g, "")
-
-  doc.save(`${nombreArchivo}.pdf`)
-}
 
   return (
     <div style={styles.container}>
@@ -848,19 +1110,21 @@ const styles = {
     fontSize: 14
   },
 
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
-    gap: 16
-  },
+grid: {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(320px, 1fr))",
+  gap: 16,
+  alignItems: "stretch"
+},
 
-  card: {
-    background: "white",
-    padding: 18,
-    borderRadius: 16,
-    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.07)",
-    border: "1px solid #e2e8f0"
-  },
+card: {
+  background: "white",
+  padding: 18,
+  borderRadius: 16,
+  boxShadow: "0 4px 14px rgba(15, 23, 42, 0.07)",
+  border: "1px solid #e2e8f0",
+  minHeight: 260
+},
 
   cardTop: {
     display: "flex",
