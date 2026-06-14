@@ -79,13 +79,6 @@ export default function AlumnoReportePrint({ alumno, mov, ingresos, gastos }) {
         </table>
       </div>
 
-      {/* BOTÓN DESCARGA (solo pantalla) */}
-      <div className="no-print">
-        <button className="btn" onClick={descargarPDF}>
-          📥 Descargar / Imprimir PDF
-        </button>
-      </div>
-
       {/* PRINT STYLE PRO */}
       <style>{`
         .print-container{
