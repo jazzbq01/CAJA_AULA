@@ -41,6 +41,60 @@ export default function TesoreriaMultas() {
   const [sustentoFile, setSustentoFile] = useState(null)
   const [subiendoSustento, setSubiendoSustento] = useState(false)
 
+  /* =========================
+     ✅ RESPONSIVE
+  ========================= */
+  const getWindowWidth = () => {
+    if (typeof window === "undefined") return 1200
+    return window.innerWidth
+  }
+
+  const [anchoPantalla, setAnchoPantalla] = useState(getWindowWidth())
+
+  useEffect(() => {
+    const handleResize = () => {
+      setAnchoPantalla(getWindowWidth())
+    }
+
+    window.addEventListener("resize", handleResize)
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [])
+
+  const esMovil = anchoPantalla < 640
+  const esTablet = anchoPantalla >= 640 && anchoPantalla < 1024
+  const esDesktop = anchoPantalla >= 1024
+
+  const columnasStats = esMovil
+    ? "1fr"
+    : esTablet
+      ? "repeat(2, minmax(0, 1fr))"
+      : "repeat(5, minmax(0, 1fr))"
+
+  const columnasMain = esMovil
+    ? "1fr"
+    : esTablet
+      ? "1fr"
+      : "repeat(auto-fit, minmax(360px, 1fr))"
+
+  const columnasDos = esMovil
+    ? "1fr"
+    : "repeat(2, minmax(0, 1fr))"
+
+  const columnasFiltros = esMovil
+    ? "1fr"
+    : esTablet
+      ? "1fr 1fr"
+      : "2fr 1fr 1fr"
+
+  const columnasInfo = esMovil
+    ? "1fr"
+    : esTablet
+      ? "repeat(2, minmax(0, 1fr))"
+      : "repeat(auto-fit, minmax(160px, 1fr))"
+
   const load = async () => {
     setLoading(true)
 
@@ -840,545 +894,867 @@ export default function TesoreriaMultas() {
   }
 
   if (loading) {
-    return <div style={styles.container}>Cargando módulo de multas...</div>
+    return (
+      <div
+        style={{
+          ...styles.container,
+          padding: esMovil ? 12 : esTablet ? 16 : 20,
+          boxSizing: "border-box"
+        }}
+      >
+        Cargando módulo de multas...
+      </div>
+    )
   }
 
   return (
-    <div style={styles.container}>
+    <div
+      style={{
+        ...styles.container,
+        padding: esMovil ? 12 : esTablet ? 16 : 20,
+        boxSizing: "border-box",
+        overflowX: "hidden"
+      }}
+    >
 
-      <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>💳 Multas de Tesorería</h1>
-          <p style={styles.subtitle}>
-            Registro de conceptos, asignación de multas, pagos y sustentos.
-          </p>
-        </div>
+      <div
+        style={{
+          ...styles.pageWrapper,
+          maxWidth: esDesktop ? 1200 : "100%",
+          margin: "0 auto",
+          width: "100%",
+          boxSizing: "border-box"
+        }}
+      >
 
-        <button
-          onClick={generarReportePdf}
-          disabled={generandoPdf}
+        <div
           style={{
-            ...styles.reportBtn,
-            opacity: generandoPdf ? 0.7 : 1,
-            cursor: generandoPdf ? "not-allowed" : "pointer"
+            ...styles.header,
+            flexDirection: esMovil ? "column" : "row",
+            alignItems: esMovil ? "stretch" : "center"
           }}
         >
-          {generandoPdf ? "Generando..." : "📄 Reporte PDF"}
-        </button>
-      </div>
-
-      <div style={styles.statsGrid}>
-        <div style={styles.statCard}>
-          <span style={styles.statLabel}>Total multas</span>
-          <strong style={styles.statValue}>{estadisticas.total}</strong>
-        </div>
-
-        <div style={styles.statCard}>
-          <span style={styles.statLabel}>Pagadas</span>
-          <strong style={styles.statGreen}>{estadisticas.pagadas}</strong>
-        </div>
-
-        <div style={styles.statCard}>
-          <span style={styles.statLabel}>No pagadas</span>
-          <strong style={styles.statRed}>
-            {estadisticas.pendientes + estadisticas.parciales}
-          </strong>
-        </div>
-
-        <div style={styles.statCard}>
-          <span style={styles.statLabel}>Con sustento</span>
-          <strong style={styles.statPurple}>{estadisticas.sustentadas}</strong>
-        </div>
-
-        <div style={styles.statCard}>
-          <span style={styles.statLabel}>Total pagado</span>
-          <strong style={styles.statValue}>
-            {formatoSoles(estadisticas.totalPagado)}
-          </strong>
-        </div>
-      </div>
-
-      <div style={styles.mainGrid}>
-
-        <section style={styles.card}>
-          <h2 style={styles.sectionTitle}>Conceptos de multa</h2>
-          <p style={styles.sectionText}>
-            Puedes registrar conceptos como multas por brigadas, reuniones u otros.
-          </p>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Nombre del concepto</label>
-            <input
-              value={conceptoNombre}
-              onChange={(e) => setConceptoNombre(e.target.value)}
-              placeholder="Ejemplo: Multas por reuniones"
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Descripción</label>
-            <input
-              value={conceptoDescripcion}
-              onChange={(e) => setConceptoDescripcion(e.target.value)}
-              placeholder="Descripción opcional"
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Monto sugerido</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={conceptoMonto}
-              onChange={(e) => setConceptoMonto(e.target.value)}
-              placeholder="Ejemplo: 10.00"
-              style={styles.input}
-            />
+          <div
+            style={{
+              minWidth: 0
+            }}
+          >
+            <h1
+              style={{
+                ...styles.title,
+                fontSize: esMovil ? 24 : esTablet ? 27 : 30,
+                lineHeight: 1.2,
+                wordBreak: "break-word"
+              }}
+            >
+              💳 Multas de Tesorería
+            </h1>
+            <p
+              style={{
+                ...styles.subtitle,
+                fontSize: esMovil ? 13 : 15,
+                lineHeight: 1.4
+              }}
+            >
+              Registro de conceptos, asignación de multas, pagos y sustentos.
+            </p>
           </div>
 
           <button
-            onClick={crearConcepto}
-            disabled={guardandoConcepto}
-            style={styles.primaryBtn}
+            onClick={generarReportePdf}
+            disabled={generandoPdf}
+            style={{
+              ...styles.reportBtn,
+              width: esMovil ? "100%" : "auto",
+              minHeight: esMovil ? 42 : "auto",
+              opacity: generandoPdf ? 0.7 : 1,
+              cursor: generandoPdf ? "not-allowed" : "pointer"
+            }}
           >
-            {guardandoConcepto ? "Guardando..." : "➕ Agregar concepto"}
+            {generandoPdf ? "Generando..." : "📄 Reporte PDF"}
           </button>
+        </div>
 
-          <div style={styles.conceptList}>
-            {conceptos.map((concepto) => (
-              <div key={concepto.id} style={styles.conceptItem}>
-                <div>
-                  <b>{concepto.nombre}</b>
-                  <p style={styles.conceptText}>
-                    Monto sugerido: {formatoSoles(concepto.monto_default)}
-                  </p>
-                </div>
-              </div>
-            ))}
+        <div
+          style={{
+            ...styles.statsGrid,
+            gridTemplateColumns: columnasStats
+          }}
+        >
+          <div style={styles.statCard}>
+            <span style={styles.statLabel}>Total multas</span>
+            <strong style={styles.statValue}>{estadisticas.total}</strong>
           </div>
-        </section>
 
-        <section style={styles.card}>
-          <h2 style={styles.sectionTitle}>Asignar multa a padre</h2>
-          <p style={styles.sectionText}>
-            Relaciona la multa con un alumno y registra los datos del padre.
-          </p>
+          <div style={styles.statCard}>
+            <span style={styles.statLabel}>Pagadas</span>
+            <strong style={styles.statGreen}>{estadisticas.pagadas}</strong>
+          </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Alumno relacionado</label>
-            <select
-              value={formMulta.alumno_id}
-              onChange={(e) => seleccionarAlumno(e.target.value)}
-              style={styles.input}
+          <div style={styles.statCard}>
+            <span style={styles.statLabel}>No pagadas</span>
+            <strong style={styles.statRed}>
+              {estadisticas.pendientes + estadisticas.parciales}
+            </strong>
+          </div>
+
+          <div style={styles.statCard}>
+            <span style={styles.statLabel}>Con sustento</span>
+            <strong style={styles.statPurple}>{estadisticas.sustentadas}</strong>
+          </div>
+
+          <div
+            style={{
+              ...styles.statCard,
+              gridColumn: esTablet ? "1 / -1" : "auto"
+            }}
+          >
+            <span style={styles.statLabel}>Total pagado</span>
+            <strong style={styles.statValue}>
+              {formatoSoles(estadisticas.totalPagado)}
+            </strong>
+          </div>
+        </div>
+
+        <div
+          style={{
+            ...styles.mainGrid,
+            gridTemplateColumns: columnasMain
+          }}
+        >
+
+          <section
+            style={{
+              ...styles.card,
+              padding: esMovil ? 14 : 18,
+              boxSizing: "border-box"
+            }}
+          >
+            <h2
+              style={{
+                ...styles.sectionTitle,
+                fontSize: esMovil ? 18 : 21,
+                lineHeight: 1.2
+              }}
             >
-              <option value="">Seleccionar alumno</option>
-              {alumnos.map((alumno) => (
-                <option key={alumno.id} value={alumno.id}>
-                  {getAlumnoNombre(alumno)}
-                </option>
+              Conceptos de multa
+            </h2>
+            <p
+              style={{
+                ...styles.sectionText,
+                fontSize: esMovil ? 13 : 14,
+                lineHeight: 1.4
+              }}
+            >
+              Puedes registrar conceptos como multas por brigadas, reuniones u otros.
+            </p>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Nombre del concepto</label>
+              <input
+                value={conceptoNombre}
+                onChange={(e) => setConceptoNombre(e.target.value)}
+                placeholder="Ejemplo: Multas por reuniones"
+                style={styles.input}
+              />
+            </div>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Descripción</label>
+              <input
+                value={conceptoDescripcion}
+                onChange={(e) => setConceptoDescripcion(e.target.value)}
+                placeholder="Descripción opcional"
+                style={styles.input}
+              />
+            </div>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Monto sugerido</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={conceptoMonto}
+                onChange={(e) => setConceptoMonto(e.target.value)}
+                placeholder="Ejemplo: 10.00"
+                style={styles.input}
+              />
+            </div>
+
+            <button
+              onClick={crearConcepto}
+              disabled={guardandoConcepto}
+              style={{
+                ...styles.primaryBtn,
+                width: esMovil ? "100%" : "auto",
+                minHeight: esMovil ? 42 : "auto",
+                opacity: guardandoConcepto ? 0.7 : 1,
+                cursor: guardandoConcepto ? "not-allowed" : "pointer"
+              }}
+            >
+              {guardandoConcepto ? "Guardando..." : "➕ Agregar concepto"}
+            </button>
+
+            <div style={styles.conceptList}>
+              {conceptos.map((concepto) => (
+                <div key={concepto.id} style={styles.conceptItem}>
+                  <div>
+                    <b style={{ wordBreak: "break-word" }}>{concepto.nombre}</b>
+                    <p style={styles.conceptText}>
+                      Monto sugerido: {formatoSoles(concepto.monto_default)}
+                    </p>
+                  </div>
+                </div>
               ))}
-            </select>
-          </div>
-
-          <div style={styles.twoCols}>
-            <div style={styles.field}>
-              <label style={styles.label}>Alumno</label>
-              <input
-                value={formMulta.alumno_nombre}
-                onChange={(e) =>
-                  setFormMulta({ ...formMulta, alumno_nombre: e.target.value })
-                }
-                placeholder="Nombre del alumno"
-                style={styles.input}
-              />
             </div>
+          </section>
+
+          <section
+            style={{
+              ...styles.card,
+              padding: esMovil ? 14 : 18,
+              boxSizing: "border-box"
+            }}
+          >
+            <h2
+              style={{
+                ...styles.sectionTitle,
+                fontSize: esMovil ? 18 : 21,
+                lineHeight: 1.2
+              }}
+            >
+              Asignar multa a padre
+            </h2>
+            <p
+              style={{
+                ...styles.sectionText,
+                fontSize: esMovil ? 13 : 14,
+                lineHeight: 1.4
+              }}
+            >
+              Relaciona la multa con un alumno y registra los datos del padre.
+            </p>
 
             <div style={styles.field}>
-              <label style={styles.label}>Padre / apoderado</label>
-              <input
-                value={formMulta.padre_nombre}
-                onChange={(e) =>
-                  setFormMulta({ ...formMulta, padre_nombre: e.target.value })
-                }
-                placeholder="Nombre del padre"
-                style={styles.input}
-              />
-            </div>
-          </div>
-
-          <div style={styles.twoCols}>
-            <div style={styles.field}>
-              <label style={styles.label}>Documento</label>
-              <input
-                value={formMulta.padre_documento}
-                onChange={(e) =>
-                  setFormMulta({ ...formMulta, padre_documento: e.target.value })
-                }
-                placeholder="DNI u otro documento"
-                style={styles.input}
-              />
-            </div>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Teléfono</label>
-              <input
-                value={formMulta.padre_telefono}
-                onChange={(e) =>
-                  setFormMulta({ ...formMulta, padre_telefono: e.target.value })
-                }
-                placeholder="Teléfono del padre"
-                style={styles.input}
-              />
-            </div>
-          </div>
-
-          <div style={styles.twoCols}>
-            <div style={styles.field}>
-              <label style={styles.label}>Concepto</label>
+              <label style={styles.label}>Alumno relacionado</label>
               <select
-                value={formMulta.concepto_id}
-                onChange={(e) => cambiarConceptoMulta(e.target.value)}
+                value={formMulta.alumno_id}
+                onChange={(e) => seleccionarAlumno(e.target.value)}
                 style={styles.input}
               >
-                <option value="">Seleccionar concepto</option>
-                {conceptos.map((concepto) => (
-                  <option key={concepto.id} value={concepto.id}>
-                    {concepto.nombre}
+                <option value="">Seleccionar alumno</option>
+                {alumnos.map((alumno) => (
+                  <option key={alumno.id} value={alumno.id}>
+                    {getAlumnoNombre(alumno)}
                   </option>
                 ))}
               </select>
             </div>
 
+            <div
+              style={{
+                ...styles.twoCols,
+                gridTemplateColumns: columnasDos
+              }}
+            >
+              <div style={styles.field}>
+                <label style={styles.label}>Alumno</label>
+                <input
+                  value={formMulta.alumno_nombre}
+                  onChange={(e) =>
+                    setFormMulta({ ...formMulta, alumno_nombre: e.target.value })
+                  }
+                  placeholder="Nombre del alumno"
+                  style={styles.input}
+                />
+              </div>
+
+              <div style={styles.field}>
+                <label style={styles.label}>Padre / apoderado</label>
+                <input
+                  value={formMulta.padre_nombre}
+                  onChange={(e) =>
+                    setFormMulta({ ...formMulta, padre_nombre: e.target.value })
+                  }
+                  placeholder="Nombre del padre"
+                  style={styles.input}
+                />
+              </div>
+            </div>
+
+            <div
+              style={{
+                ...styles.twoCols,
+                gridTemplateColumns: columnasDos
+              }}
+            >
+              <div style={styles.field}>
+                <label style={styles.label}>Documento</label>
+                <input
+                  value={formMulta.padre_documento}
+                  onChange={(e) =>
+                    setFormMulta({ ...formMulta, padre_documento: e.target.value })
+                  }
+                  placeholder="DNI u otro documento"
+                  style={styles.input}
+                />
+              </div>
+
+              <div style={styles.field}>
+                <label style={styles.label}>Teléfono</label>
+                <input
+                  value={formMulta.padre_telefono}
+                  onChange={(e) =>
+                    setFormMulta({ ...formMulta, padre_telefono: e.target.value })
+                  }
+                  placeholder="Teléfono del padre"
+                  style={styles.input}
+                />
+              </div>
+            </div>
+
+            <div
+              style={{
+                ...styles.twoCols,
+                gridTemplateColumns: columnasDos
+              }}
+            >
+              <div style={styles.field}>
+                <label style={styles.label}>Concepto</label>
+                <select
+                  value={formMulta.concepto_id}
+                  onChange={(e) => cambiarConceptoMulta(e.target.value)}
+                  style={styles.input}
+                >
+                  <option value="">Seleccionar concepto</option>
+                  {conceptos.map((concepto) => (
+                    <option key={concepto.id} value={concepto.id}>
+                      {concepto.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={styles.field}>
+                <label style={styles.label}>Monto de multa</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formMulta.monto_multa}
+                  onChange={(e) =>
+                    setFormMulta({ ...formMulta, monto_multa: e.target.value })
+                  }
+                  placeholder="Ejemplo: 10.00"
+                  style={styles.input}
+                />
+              </div>
+            </div>
+
             <div style={styles.field}>
-              <label style={styles.label}>Monto de multa</label>
+              <label style={styles.label}>Observación</label>
               <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={formMulta.monto_multa}
+                value={formMulta.descripcion}
                 onChange={(e) =>
-                  setFormMulta({ ...formMulta, monto_multa: e.target.value })
+                  setFormMulta({ ...formMulta, descripcion: e.target.value })
                 }
-                placeholder="Ejemplo: 10.00"
+                placeholder="Motivo u observación de la multa"
                 style={styles.input}
               />
             </div>
+
+            <button
+              onClick={crearMulta}
+              disabled={guardandoMulta}
+              style={{
+                ...styles.primaryBtn,
+                width: esMovil ? "100%" : "auto",
+                minHeight: esMovil ? 42 : "auto",
+                opacity: guardandoMulta ? 0.7 : 1,
+                cursor: guardandoMulta ? "not-allowed" : "pointer"
+              }}
+            >
+              {guardandoMulta ? "Guardando..." : "💾 Asignar multa"}
+            </button>
+          </section>
+
+        </div>
+
+        <section
+          style={{
+            ...styles.listCard,
+            padding: esMovil ? 14 : 18,
+            boxSizing: "border-box"
+          }}
+        >
+          <div style={styles.listHeader}>
+            <div>
+              <h2
+                style={{
+                  ...styles.sectionTitle,
+                  fontSize: esMovil ? 18 : 21,
+                  lineHeight: 1.2
+                }}
+              >
+                Multas registradas
+              </h2>
+              <p
+                style={{
+                  ...styles.sectionText,
+                  fontSize: esMovil ? 13 : 14,
+                  lineHeight: 1.4
+                }}
+              >
+                Control de pagos, pendientes y sustentos.
+              </p>
+            </div>
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Observación</label>
+          <div
+            style={{
+              ...styles.filters,
+              gridTemplateColumns: columnasFiltros
+            }}
+          >
             <input
-              value={formMulta.descripcion}
-              onChange={(e) =>
-                setFormMulta({ ...formMulta, descripcion: e.target.value })
-              }
-              placeholder="Motivo u observación de la multa"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por padre, alumno o concepto"
               style={styles.input}
             />
+
+            <select
+              value={filtroConcepto}
+              onChange={(e) => setFiltroConcepto(e.target.value)}
+              style={styles.input}
+            >
+              <option value="">Todos los conceptos</option>
+              {conceptos.map((concepto) => (
+                <option key={concepto.id} value={concepto.id}>
+                  {concepto.nombre}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filtroEstado}
+              onChange={(e) => setFiltroEstado(e.target.value)}
+              style={{
+                ...styles.input,
+                gridColumn: esTablet ? "1 / -1" : "auto"
+              }}
+            >
+              <option value="">Todos los estados</option>
+              <option value="PENDIENTE">Pendiente</option>
+              <option value="PARCIAL">Pago parcial</option>
+              <option value="PAGADA">Pagada</option>
+              <option value="SUSTENTADA">Con sustento</option>
+            </select>
           </div>
 
-          <button
-            onClick={crearMulta}
-            disabled={guardandoMulta}
-            style={styles.primaryBtn}
-          >
-            {guardandoMulta ? "Guardando..." : "💾 Asignar multa"}
-          </button>
+          {multasFiltradas.length === 0 && (
+            <div style={styles.empty}>
+              No hay multas registradas con los filtros seleccionados.
+            </div>
+          )}
+
+          <div style={styles.multasList}>
+            {multasFiltradas.map((multa) => {
+              const estado = getEstadoStyle(multa.estado)
+              const pendiente = calcularPendiente(multa)
+
+              const multaCerrada =
+                multa.estado === "PAGADA" || multa.estado === "SUSTENTADA"
+
+              return (
+                <div
+                  key={multa.id}
+                  style={{
+                    ...styles.multaCard,
+                    padding: esMovil ? 14 : 16,
+                    boxSizing: "border-box"
+                  }}
+                >
+                  <div
+                    style={{
+                      ...styles.multaTop,
+                      flexDirection: esMovil ? "column" : "row",
+                      alignItems: esMovil ? "stretch" : "flex-start"
+                    }}
+                  >
+                    <div
+                      style={{
+                        minWidth: 0,
+                        width: "100%"
+                      }}
+                    >
+                      <h3
+                        style={{
+                          ...styles.multaTitle,
+                          fontSize: esMovil ? 18 : 20,
+                          lineHeight: 1.25,
+                          wordBreak: "break-word"
+                        }}
+                      >
+                        {multa.padre_nombre}
+                      </h3>
+
+                      <div style={styles.badgeRow}>
+                        <span
+                          style={{
+                            ...styles.estadoBadge,
+                            color: estado.color,
+                            background: estado.background,
+                            borderColor: estado.border
+                          }}
+                        >
+                          {estado.label}
+                        </span>
+
+                        <span style={styles.conceptBadge}>
+                          {getNombreConcepto(multa.concepto_id)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        ...styles.amountBox,
+                        width: esMovil ? "100%" : "auto",
+                        textAlign: esMovil ? "left" : "right",
+                        boxSizing: "border-box"
+                      }}
+                    >
+                      <span style={styles.amountLabel}>Multa</span>
+                      <strong
+                        style={{
+                          ...styles.amountValue,
+                          fontSize: esMovil ? 18 : 20
+                        }}
+                      >
+                        {formatoSoles(multa.monto_multa)}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      ...styles.infoGrid,
+                      gridTemplateColumns: columnasInfo
+                    }}
+                  >
+                    <div style={styles.infoBox}>
+                      <span style={styles.infoLabel}>Alumno</span>
+                      <b
+                        style={{
+                          ...styles.infoValue,
+                          wordBreak: "break-word"
+                        }}
+                      >
+                        {multa.alumno_nombre || "Sin alumno"}
+                      </b>
+                    </div>
+
+                    <div style={styles.infoBox}>
+                      <span style={styles.infoLabel}>Pagado</span>
+                      <b style={styles.infoGreen}>
+                        {formatoSoles(multa.monto_pagado)}
+                      </b>
+                    </div>
+
+                    <div style={styles.infoBox}>
+                      <span style={styles.infoLabel}>Pendiente</span>
+                      <b style={styles.infoRed}>
+                        {formatoSoles(pendiente)}
+                      </b>
+                    </div>
+
+                    <div style={styles.infoBox}>
+                      <span style={styles.infoLabel}>Fecha</span>
+                      <b style={styles.infoValue}>
+                        {formatoFecha(multa.fecha_asignacion)}
+                      </b>
+                    </div>
+                  </div>
+
+                  {multa.estado === "SUSTENTADA" && (
+                    <div
+                      style={{
+                        ...styles.sustentoBox,
+                        wordBreak: "break-word",
+                        lineHeight: 1.4
+                      }}
+                    >
+                      <b>Sustento:</b>{" "}
+                      {multa.sustento_descripcion || "Sin descripción"}
+                      {multa.sustento_url && (
+                        <>
+                          {" "}
+                          <a
+                            href={multa.sustento_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={styles.link}
+                          >
+                            Ver archivo
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      ...styles.cardFooter,
+                      flexDirection: esMovil ? "column" : "row",
+                      alignItems: esMovil ? "stretch" : "center"
+                    }}
+                  >
+                    <p
+                      style={{
+                        ...styles.helperText,
+                        lineHeight: 1.4,
+                        wordBreak: "break-word"
+                      }}
+                    >
+                      {multa.descripcion || "Sin observación adicional"}
+                    </p>
+
+                    {!multaCerrada ? (
+                      <div
+                        style={{
+                          ...styles.actions,
+                          width: esMovil ? "100%" : "auto"
+                        }}
+                      >
+                        <button
+                          onClick={() => abrirModalPago(multa)}
+                          style={{
+                            ...styles.payBtn,
+                            flex: esMovil ? 1 : "initial",
+                            minHeight: esMovil ? 40 : "auto"
+                          }}
+                        >
+                          💰 Registrar pago
+                        </button>
+
+                        <button
+                          onClick={() => abrirModalSustento(multa)}
+                          style={{
+                            ...styles.supportBtn,
+                            flex: esMovil ? 1 : "initial",
+                            minHeight: esMovil ? 40 : "auto"
+                          }}
+                        >
+                          📎 Registrar sustento
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={styles.actions}>
+                        <span
+                          style={{
+                            ...styles.closedBadge,
+                            color: multa.estado === "PAGADA" ? "#166534" : "#6d28d9",
+                            background:
+                              multa.estado === "PAGADA" ? "#dcfce7" : "#ede9fe",
+                            borderColor:
+                              multa.estado === "PAGADA" ? "#86efac" : "#ddd6fe"
+                          }}
+                        >
+                          {multa.estado === "PAGADA"
+                            ? "✅ Multa pagada"
+                            : "📎 Multa sustentada"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </section>
 
-      </div>
-
-      <section style={styles.listCard}>
-        <div style={styles.listHeader}>
-          <div>
-            <h2 style={styles.sectionTitle}>Multas registradas</h2>
-            <p style={styles.sectionText}>
-              Control de pagos, pendientes y sustentos.
-            </p>
-          </div>
-        </div>
-
-        <div style={styles.filters}>
-          <input
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por padre, alumno o concepto"
-            style={styles.input}
-          />
-
-          <select
-            value={filtroConcepto}
-            onChange={(e) => setFiltroConcepto(e.target.value)}
-            style={styles.input}
+        {modal && (
+          <div
+            style={{
+              ...styles.overlay,
+              padding: esMovil ? 12 : 20
+            }}
           >
-            <option value="">Todos los conceptos</option>
-            {conceptos.map((concepto) => (
-              <option key={concepto.id} value={concepto.id}>
-                {concepto.nombre}
-              </option>
-            ))}
-          </select>
+            <div
+              style={{
+                ...styles.modal,
+                padding: esMovil ? 16 : 20,
+                maxHeight: esMovil ? "92vh" : "auto",
+                overflowY: esMovil ? "auto" : "visible",
+                boxSizing: "border-box"
+              }}
+            >
+              {modal.tipo === "PAGO" && (
+                <>
+                  <h2
+                    style={{
+                      ...styles.modalTitle,
+                      fontSize: esMovil ? 20 : 22,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    Registrar pago
+                  </h2>
+                  <p
+                    style={{
+                      ...styles.sectionText,
+                      lineHeight: 1.4
+                    }}
+                  >
+                    Padre: <b>{modal.multa.padre_nombre}</b>
+                  </p>
 
-          <select
-            value={filtroEstado}
-            onChange={(e) => setFiltroEstado(e.target.value)}
-            style={styles.input}
-          >
-            <option value="">Todos los estados</option>
-            <option value="PENDIENTE">Pendiente</option>
-            <option value="PARCIAL">Pago parcial</option>
-            <option value="PAGADA">Pagada</option>
-            <option value="SUSTENTADA">Con sustento</option>
-          </select>
-        </div>
+                  <div style={styles.field}>
+                    <label style={styles.label}>Monto pagado acumulado</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={pagoMonto}
+                      onChange={(e) => setPagoMonto(e.target.value)}
+                      style={styles.input}
+                      placeholder="Ejemplo: 10.00"
+                    />
+                  </div>
 
-        {multasFiltradas.length === 0 && (
-          <div style={styles.empty}>
-            No hay multas registradas con los filtros seleccionados.
+                  <div
+                    style={{
+                      ...styles.modalActions,
+                      flexDirection: esMovil ? "column" : "row"
+                    }}
+                  >
+                    <button
+                      onClick={registrarPago}
+                      style={{
+                        ...styles.primaryBtn,
+                        width: esMovil ? "100%" : "auto",
+                        minHeight: esMovil ? 42 : "auto"
+                      }}
+                    >
+                      Guardar pago
+                    </button>
+
+                    <button
+                      onClick={cerrarModal}
+                      style={{
+                        ...styles.cancelBtn,
+                        width: esMovil ? "100%" : "auto",
+                        minHeight: esMovil ? 42 : "auto"
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {modal.tipo === "SUSTENTO" && (
+                <>
+                  <h2
+                    style={{
+                      ...styles.modalTitle,
+                      fontSize: esMovil ? 20 : 22,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    Registrar sustento
+                  </h2>
+                  <p
+                    style={{
+                      ...styles.sectionText,
+                      lineHeight: 1.4
+                    }}
+                  >
+                    Padre: <b>{modal.multa.padre_nombre}</b>
+                  </p>
+
+                  <div style={styles.field}>
+                    <label style={styles.label}>Descripción del sustento</label>
+                    <input
+                      value={sustentoDescripcion}
+                      onChange={(e) => setSustentoDescripcion(e.target.value)}
+                      style={styles.input}
+                      placeholder="Ejemplo: presentó justificación por trabajo"
+                    />
+                  </div>
+
+                  <div style={styles.field}>
+                    <label style={styles.label}>Archivo del sustento</label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf,.doc,.docx"
+                      onChange={(e) => setSustentoFile(e.target.files?.[0] || null)}
+                      style={styles.input}
+                    />
+
+                    {sustentoFile && (
+                      <p
+                        style={{
+                          ...styles.fileHelp,
+                          wordBreak: "break-word",
+                          lineHeight: 1.4
+                        }}
+                      >
+                        Archivo seleccionado: <b>{sustentoFile.name}</b>
+                      </p>
+                    )}
+                  </div>
+
+                  <div style={styles.field}>
+                    <label style={styles.label}>URL del sustento</label>
+                    <input
+                      value={sustentoUrl}
+                      onChange={(e) => setSustentoUrl(e.target.value)}
+                      style={styles.input}
+                      placeholder="Opcional: pega una URL si ya tienes el archivo en otro lugar"
+                    />
+                  </div>
+
+                  <div
+                    style={{
+                      ...styles.modalActions,
+                      flexDirection: esMovil ? "column" : "row"
+                    }}
+                  >
+                    <button
+                      onClick={registrarSustento}
+                      disabled={subiendoSustento}
+                      style={{
+                        ...styles.primaryBtn,
+                        width: esMovil ? "100%" : "auto",
+                        minHeight: esMovil ? 42 : "auto",
+                        opacity: subiendoSustento ? 0.7 : 1,
+                        cursor: subiendoSustento ? "not-allowed" : "pointer"
+                      }}
+                    >
+                      {subiendoSustento ? "Subiendo archivo..." : "Guardar sustento"}
+                    </button>
+
+                    <button
+                      onClick={cerrarModal}
+                      style={{
+                        ...styles.cancelBtn,
+                        width: esMovil ? "100%" : "auto",
+                        minHeight: esMovil ? 42 : "auto"
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
 
-        <div style={styles.multasList}>
-          {multasFiltradas.map((multa) => {
-            const estado = getEstadoStyle(multa.estado)
-            const pendiente = calcularPendiente(multa)
-
-            const multaCerrada =
-              multa.estado === "PAGADA" || multa.estado === "SUSTENTADA"
-
-            return (
-              <div key={multa.id} style={styles.multaCard}>
-                <div style={styles.multaTop}>
-                  <div>
-                    <h3 style={styles.multaTitle}>
-                      {multa.padre_nombre}
-                    </h3>
-
-                    <div style={styles.badgeRow}>
-                      <span
-                        style={{
-                          ...styles.estadoBadge,
-                          color: estado.color,
-                          background: estado.background,
-                          borderColor: estado.border
-                        }}
-                      >
-                        {estado.label}
-                      </span>
-
-                      <span style={styles.conceptBadge}>
-                        {getNombreConcepto(multa.concepto_id)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={styles.amountBox}>
-                    <span style={styles.amountLabel}>Multa</span>
-                    <strong style={styles.amountValue}>
-                      {formatoSoles(multa.monto_multa)}
-                    </strong>
-                  </div>
-                </div>
-
-                <div style={styles.infoGrid}>
-                  <div style={styles.infoBox}>
-                    <span style={styles.infoLabel}>Alumno</span>
-                    <b style={styles.infoValue}>
-                      {multa.alumno_nombre || "Sin alumno"}
-                    </b>
-                  </div>
-
-                  <div style={styles.infoBox}>
-                    <span style={styles.infoLabel}>Pagado</span>
-                    <b style={styles.infoGreen}>
-                      {formatoSoles(multa.monto_pagado)}
-                    </b>
-                  </div>
-
-                  <div style={styles.infoBox}>
-                    <span style={styles.infoLabel}>Pendiente</span>
-                    <b style={styles.infoRed}>
-                      {formatoSoles(pendiente)}
-                    </b>
-                  </div>
-
-                  <div style={styles.infoBox}>
-                    <span style={styles.infoLabel}>Fecha</span>
-                    <b style={styles.infoValue}>
-                      {formatoFecha(multa.fecha_asignacion)}
-                    </b>
-                  </div>
-                </div>
-
-                {multa.estado === "SUSTENTADA" && (
-                  <div style={styles.sustentoBox}>
-                    <b>Sustento:</b>{" "}
-                    {multa.sustento_descripcion || "Sin descripción"}
-                    {multa.sustento_url && (
-                      <>
-                        {" "}
-                        <a
-                          href={multa.sustento_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={styles.link}
-                        >
-                          Ver archivo
-                        </a>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                <div style={styles.cardFooter}>
-                  <p style={styles.helperText}>
-                    {multa.descripcion || "Sin observación adicional"}
-                  </p>
-
-                  {!multaCerrada ? (
-                    <div style={styles.actions}>
-                      <button
-                        onClick={() => abrirModalPago(multa)}
-                        style={styles.payBtn}
-                      >
-                        💰 Registrar pago
-                      </button>
-
-                      <button
-                        onClick={() => abrirModalSustento(multa)}
-                        style={styles.supportBtn}
-                      >
-                        📎 Registrar sustento
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={styles.actions}>
-                      <span
-                        style={{
-                          ...styles.closedBadge,
-                          color: multa.estado === "PAGADA" ? "#166534" : "#6d28d9",
-                          background:
-                            multa.estado === "PAGADA" ? "#dcfce7" : "#ede9fe",
-                          borderColor:
-                            multa.estado === "PAGADA" ? "#86efac" : "#ddd6fe"
-                        }}
-                      >
-                        {multa.estado === "PAGADA"
-                          ? "✅ Multa pagada"
-                          : "📎 Multa sustentada"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      {modal && (
-        <div style={styles.overlay}>
-          <div style={styles.modal}>
-            {modal.tipo === "PAGO" && (
-              <>
-                <h2 style={styles.modalTitle}>Registrar pago</h2>
-                <p style={styles.sectionText}>
-                  Padre: <b>{modal.multa.padre_nombre}</b>
-                </p>
-
-                <div style={styles.field}>
-                  <label style={styles.label}>Monto pagado acumulado</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={pagoMonto}
-                    onChange={(e) => setPagoMonto(e.target.value)}
-                    style={styles.input}
-                    placeholder="Ejemplo: 10.00"
-                  />
-                </div>
-
-                <div style={styles.modalActions}>
-                  <button onClick={registrarPago} style={styles.primaryBtn}>
-                    Guardar pago
-                  </button>
-
-                  <button onClick={cerrarModal} style={styles.cancelBtn}>
-                    Cancelar
-                  </button>
-                </div>
-              </>
-            )}
-
-            {modal.tipo === "SUSTENTO" && (
-              <>
-                <h2 style={styles.modalTitle}>Registrar sustento</h2>
-                <p style={styles.sectionText}>
-                  Padre: <b>{modal.multa.padre_nombre}</b>
-                </p>
-
-                <div style={styles.field}>
-                  <label style={styles.label}>Descripción del sustento</label>
-                  <input
-                    value={sustentoDescripcion}
-                    onChange={(e) => setSustentoDescripcion(e.target.value)}
-                    style={styles.input}
-                    placeholder="Ejemplo: presentó justificación por trabajo"
-                  />
-                </div>
-
-                <div style={styles.field}>
-                  <label style={styles.label}>Archivo del sustento</label>
-                  <input
-                    type="file"
-                    accept="image/*,.pdf,.doc,.docx"
-                    onChange={(e) => setSustentoFile(e.target.files?.[0] || null)}
-                    style={styles.input}
-                  />
-
-                  {sustentoFile && (
-                    <p style={styles.fileHelp}>
-                      Archivo seleccionado: <b>{sustentoFile.name}</b>
-                    </p>
-                  )}
-                </div>
-
-                <div style={styles.field}>
-                  <label style={styles.label}>URL del sustento</label>
-                  <input
-                    value={sustentoUrl}
-                    onChange={(e) => setSustentoUrl(e.target.value)}
-                    style={styles.input}
-                    placeholder="Opcional: pega una URL si ya tienes el archivo en otro lugar"
-                  />
-                </div>
-
-                <div style={styles.modalActions}>
-                  <button
-                    onClick={registrarSustento}
-                    disabled={subiendoSustento}
-                    style={{
-                      ...styles.primaryBtn,
-                      opacity: subiendoSustento ? 0.7 : 1,
-                      cursor: subiendoSustento ? "not-allowed" : "pointer"
-                    }}
-                  >
-                    {subiendoSustento ? "Subiendo archivo..." : "Guardar sustento"}
-                  </button>
-
-                  <button onClick={cerrarModal} style={styles.cancelBtn}>
-                    Cancelar
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      </div>
 
     </div>
   )
@@ -1390,6 +1766,10 @@ const styles = {
     fontFamily: "Arial",
     background: "#f4f6fb",
     minHeight: "100vh"
+  },
+
+  pageWrapper: {
+    width: "100%"
   },
 
   header: {
@@ -1433,7 +1813,8 @@ const styles = {
     borderRadius: 16,
     padding: 16,
     boxShadow: "0 4px 14px rgba(15, 23, 42, 0.06)",
-    border: "1px solid #e2e8f0"
+    border: "1px solid #e2e8f0",
+    boxSizing: "border-box"
   },
 
   statLabel: {

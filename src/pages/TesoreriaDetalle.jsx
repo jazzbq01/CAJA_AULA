@@ -27,6 +27,50 @@ export default function TesoreriaDetalle() {
   const [archivoObservacion, setArchivoObservacion] = useState("")
   const [subiendoArchivo, setSubiendoArchivo] = useState(false)
 
+  /* =========================
+     ✅ RESPONSIVE
+  ========================= */
+  const getWindowWidth = () => {
+    if (typeof window === "undefined") return 1200
+    return window.innerWidth
+  }
+
+  const [anchoPantalla, setAnchoPantalla] = useState(getWindowWidth())
+
+  useEffect(() => {
+    const handleResize = () => {
+      setAnchoPantalla(getWindowWidth())
+    }
+
+    window.addEventListener("resize", handleResize)
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [])
+
+  const esMovil = anchoPantalla < 640
+  const esTablet = anchoPantalla >= 640 && anchoPantalla < 1024
+  const esDesktop = anchoPantalla >= 1024
+
+  const columnasInfoHeader = esMovil
+    ? "1fr"
+    : esTablet
+      ? "repeat(2, minmax(0, 1fr))"
+      : "repeat(4, minmax(0, 1fr))"
+
+  const columnasFormulario = esMovil
+    ? "1fr"
+    : esTablet
+      ? "repeat(2, minmax(0, 1fr))"
+      : "repeat(auto-fit, minmax(220px, 1fr))"
+
+  const columnasMeta = esMovil
+    ? "1fr"
+    : esTablet
+      ? "repeat(2, minmax(0, 1fr))"
+      : "repeat(auto-fit, minmax(160px, 1fr))"
+
   const load = async () => {
     setLoading(true)
 
@@ -444,14 +488,36 @@ export default function TesoreriaDetalle() {
   }
 
   if (loading) {
-    return <div style={styles.container}>Cargando detalle...</div>
+    return (
+      <div
+        style={{
+          ...styles.container,
+          padding: esMovil ? 12 : esTablet ? 16 : 20,
+          boxSizing: "border-box"
+        }}
+      >
+        Cargando detalle...
+      </div>
+    )
   }
 
   if (!actividad) {
     return (
-      <div style={styles.container}>
+      <div
+        style={{
+          ...styles.container,
+          padding: esMovil ? 12 : esTablet ? 16 : 20,
+          boxSizing: "border-box"
+        }}
+      >
         <h2>Actividad no encontrada</h2>
-        <button style={styles.backBtn} onClick={() => navigate("/tesoreria")}>
+        <button
+          style={{
+            ...styles.backBtn,
+            width: esMovil ? "100%" : "auto"
+          }}
+          onClick={() => navigate("/tesoreria")}
+        >
           ← Volver a Tesorería
         </button>
       </div>
@@ -487,440 +553,734 @@ export default function TesoreriaDetalle() {
   }
 
   return (
-    <div style={styles.container}>
+    <div
+      style={{
+        ...styles.container,
+        padding: esMovil ? 12 : esTablet ? 16 : 20,
+        boxSizing: "border-box",
+        overflowX: "hidden"
+      }}
+    >
 
-      <button style={styles.backBtn} onClick={() => navigate("/tesoreria")}>
-        ← Volver
-      </button>
+      <div
+        style={{
+          ...styles.pageWrapper,
+          maxWidth: esDesktop ? 1200 : "100%",
+          margin: "0 auto",
+          width: "100%",
+          boxSizing: "border-box"
+        }}
+      >
 
-      <section style={styles.headerCard}>
-        <div>
-          <h1 style={styles.title}>💳 {actividad.nombre}</h1>
+        <button
+          style={{
+            ...styles.backBtn,
+            width: esMovil ? "100%" : "auto",
+            minHeight: esMovil ? 42 : "auto"
+          }}
+          onClick={() => navigate("/tesoreria")}
+        >
+          ← Volver
+        </button>
 
-          <div style={styles.infoGrid}>
-            <div>
-              <span style={styles.labelText}>Estado</span>
-              <p style={styles.valueText}>
-                <b style={{ color: estaFinalizada ? "#16a34a" : "#d97706" }}>
-                  {actividad.estado || "BORRADOR"}
-                </b>
-              </p>
-            </div>
-
-            <div>
-              <span style={styles.labelText}>Saldo actual</span>
-              <p style={styles.valueText}>
-                <b>S/ {saldoActual.toFixed(2)}</b>
-              </p>
-            </div>
-
-            <div>
-              <span style={styles.labelText}>Total de detalles</span>
-              <p style={styles.valueText}>
-                <b>{items.length}</b>
-              </p>
-            </div>
-
-            <div>
-              <span style={styles.labelText}>Archivos adjuntos</span>
-              <p style={styles.valueText}>
-                <b>{archivos.length}</b>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.headerActions}>
-          {!estaFinalizada && (
-            <button style={styles.finalizarBtn} onClick={finalizarActividad}>
-              🔒 Finalizar actividad
-            </button>
-          )}
-        </div>
-      </section>
-
-      {!estaFinalizada && (
-        <section style={styles.formCard}>
-          <h2 style={styles.sectionTitle}>Agregar detalle de tesorería</h2>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Descripción del detalle</label>
-            <input
-              type="text"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Ejemplo: Cuota Día de la Madre"
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.row}>
-            <div style={styles.field}>
-              <label style={styles.label}>Tipo de movimiento</label>
-              <select
-                value={tipo}
-                onChange={(e) => {
-                  setTipo(e.target.value)
-                  setCategoria(e.target.value === "INGRESO" ? "CUOTA_PADRE" : "COMPRA")
-                }}
-                style={styles.input}
-              >
-                <option value="INGRESO">Ingreso</option>
-                <option value="GASTO">Gasto</option>
-              </select>
-            </div>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Categoría</label>
-              <select
-                value={categoria}
-                onChange={(e) => setCategoria(e.target.value)}
-                style={styles.input}
-              >
-                {tipo === "INGRESO" && (
-                  <>
-                    <option value="CUOTA_PADRE">Cuota de padre</option>
-                    <option value="DONACION">Donación</option>
-                    <option value="ACTIVIDAD">Actividad</option>
-                    <option value="OTROS">Otros ingresos</option>
-                  </>
-                )}
-
-                {tipo === "GASTO" && (
-                  <>
-                    <option value="COMPRA">Compra</option>
-                    <option value="SERVICIO">Servicio</option>
-                    <option value="CAJA_CHICA">Caja chica</option>
-                    <option value="OTROS">Otros gastos</option>
-                  </>
-                )}
-              </select>
-            </div>
-          </div>
-
-          <div style={styles.row}>
-            <div style={styles.field}>
-              <label style={styles.label}>Cantidad</label>
-              <input
-                type="number"
-                min="1"
-                value={cantidad}
-                onChange={(e) => setCantidad(e.target.value)}
-                placeholder="Ejemplo: 1"
-                style={styles.input}
-              />
-            </div>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Monto unitario</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={monto}
-                onChange={(e) => setMonto(e.target.value)}
-                placeholder="Ejemplo: 10.00"
-                style={styles.input}
-              />
-            </div>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Subtotal</label>
-              <input
-                value={`S/ ${subtotalPreview.toFixed(2)}`}
-                disabled
-                style={{
-                  ...styles.input,
-                  background: "#f8fafc",
-                  fontWeight: "bold"
-                }}
-              />
-            </div>
-          </div>
-
-          <div style={styles.formFooter}>
-            <button
-              onClick={agregarItem}
-              disabled={guardando}
-              style={styles.addBtn}
+        <section
+          style={{
+            ...styles.headerCard,
+            flexDirection: esMovil || esTablet ? "column" : "row",
+            alignItems: esMovil || esTablet ? "stretch" : "center",
+            padding: esMovil ? 14 : esTablet ? 18 : 22,
+            boxSizing: "border-box"
+          }}
+        >
+          <div
+            style={{
+              minWidth: 0,
+              width: "100%"
+            }}
+          >
+            <h1
+              style={{
+                ...styles.title,
+                fontSize: esMovil ? 22 : esTablet ? 25 : 28,
+                lineHeight: 1.2,
+                wordBreak: "break-word",
+                margin: esMovil ? "0 0 14px 0" : "0 0 18px 0"
+              }}
             >
-              {guardando ? "Guardando..." : "➕ Agregar detalle"}
-            </button>
+              💳 {actividad.nombre}
+            </h1>
+
+            <div
+              style={{
+                ...styles.infoGrid,
+                display: "grid",
+                gridTemplateColumns: columnasInfoHeader,
+                gap: esMovil ? 10 : 14
+              }}
+            >
+              <div style={styles.headerInfoBox}>
+                <span style={styles.labelText}>Estado</span>
+                <p style={styles.valueText}>
+                  <b style={{ color: estaFinalizada ? "#16a34a" : "#d97706" }}>
+                    {actividad.estado || "BORRADOR"}
+                  </b>
+                </p>
+              </div>
+
+              <div style={styles.headerInfoBox}>
+                <span style={styles.labelText}>Saldo actual</span>
+                <p style={styles.valueText}>
+                  <b>S/ {saldoActual.toFixed(2)}</b>
+                </p>
+              </div>
+
+              <div style={styles.headerInfoBox}>
+                <span style={styles.labelText}>Total de detalles</span>
+                <p style={styles.valueText}>
+                  <b>{items.length}</b>
+                </p>
+              </div>
+
+              <div style={styles.headerInfoBox}>
+                <span style={styles.labelText}>Archivos adjuntos</span>
+                <p style={styles.valueText}>
+                  <b>{archivos.length}</b>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              ...styles.headerActions,
+              width: esMovil || esTablet ? "100%" : "auto"
+            }}
+          >
+            {!estaFinalizada && (
+              <button
+                style={{
+                  ...styles.finalizarBtn,
+                  width: esMovil || esTablet ? "100%" : "auto",
+                  minHeight: esMovil ? 42 : "auto"
+                }}
+                onClick={finalizarActividad}
+              >
+                🔒 Finalizar actividad
+              </button>
+            )}
           </div>
         </section>
-      )}
 
-      <section style={styles.listSection}>
-        <div style={styles.listHeader}>
-          <div>
-            <h2 style={styles.sectionTitle}>Detalles registrados</h2>
-            <p style={styles.listSubtitle}>
-              Movimientos asociados a esta actividad de tesorería.
-            </p>
-          </div>
+        {!estaFinalizada && (
+          <section
+            style={{
+              ...styles.formCard,
+              padding: esMovil ? 14 : 18,
+              boxSizing: "border-box"
+            }}
+          >
+            <h2
+              style={{
+                ...styles.sectionTitle,
+                fontSize: esMovil ? 18 : 20,
+                lineHeight: 1.2
+              }}
+            >
+              Agregar detalle de tesorería
+            </h2>
 
-          <div style={styles.counterBadge}>
-            {items.length} registro{items.length === 1 ? "" : "s"}
-          </div>
-        </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Descripción del detalle</label>
+              <input
+                type="text"
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                placeholder="Ejemplo: Cuota Día de la Madre"
+                style={{
+                  ...styles.input,
+                  width: "100%",
+                  boxSizing: "border-box"
+                }}
+              />
+            </div>
 
-        {items.length === 0 && (
-          <div style={styles.empty}>
-            Esta actividad todavía no tiene detalles registrados.
-          </div>
-        )}
-
-        <div style={styles.itemsList}>
-          {items.map((item) => {
-            const tipoStyle = getTipoStyle(item.tipo)
-            const subtotal = Number(item.subtotal || 0)
-            const precioUnitario = Number(item.precio_unitario || 0)
-            const noAfectaSaldo = item.afecta_saldo === false
-            const archivosItem = getArchivosItem(item.id)
-
-            return (
-              <div key={item.id} style={styles.itemCard}>
-
-                <div
+            <div
+              style={{
+                ...styles.row,
+                gridTemplateColumns: columnasFormulario
+              }}
+            >
+              <div style={styles.field}>
+                <label style={styles.label}>Tipo de movimiento</label>
+                <select
+                  value={tipo}
+                  onChange={(e) => {
+                    setTipo(e.target.value)
+                    setCategoria(e.target.value === "INGRESO" ? "CUOTA_PADRE" : "COMPRA")
+                  }}
                   style={{
-                    ...styles.itemAccent,
-                    background: tipoStyle.color
+                    ...styles.input,
+                    width: "100%",
+                    boxSizing: "border-box"
+                  }}
+                >
+                  <option value="INGRESO">Ingreso</option>
+                  <option value="GASTO">Gasto</option>
+                </select>
+              </div>
+
+              <div style={styles.field}>
+                <label style={styles.label}>Categoría</label>
+                <select
+                  value={categoria}
+                  onChange={(e) => setCategoria(e.target.value)}
+                  style={{
+                    ...styles.input,
+                    width: "100%",
+                    boxSizing: "border-box"
+                  }}
+                >
+                  {tipo === "INGRESO" && (
+                    <>
+                      <option value="CUOTA_PADRE">Cuota de padre</option>
+                      <option value="DONACION">Donación</option>
+                      <option value="ACTIVIDAD">Actividad</option>
+                      <option value="OTROS">Otros ingresos</option>
+                    </>
+                  )}
+
+                  {tipo === "GASTO" && (
+                    <>
+                      <option value="COMPRA">Compra</option>
+                      <option value="SERVICIO">Servicio</option>
+                      <option value="CAJA_CHICA">Caja chica</option>
+                      <option value="OTROS">Otros gastos</option>
+                    </>
+                  )}
+                </select>
+              </div>
+            </div>
+
+            <div
+              style={{
+                ...styles.row,
+                gridTemplateColumns: columnasFormulario
+              }}
+            >
+              <div style={styles.field}>
+                <label style={styles.label}>Cantidad</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={cantidad}
+                  onChange={(e) => setCantidad(e.target.value)}
+                  placeholder="Ejemplo: 1"
+                  style={{
+                    ...styles.input,
+                    width: "100%",
+                    boxSizing: "border-box"
                   }}
                 />
+              </div>
 
-                <div style={styles.itemContent}>
+              <div style={styles.field}>
+                <label style={styles.label}>Monto unitario</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={monto}
+                  onChange={(e) => setMonto(e.target.value)}
+                  placeholder="Ejemplo: 10.00"
+                  style={{
+                    ...styles.input,
+                    width: "100%",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
 
-                  <div style={styles.itemTop}>
-                    <div style={styles.itemMainInfo}>
-                      <h3 style={styles.itemTitle}>
-                        {item.descripcion || "Sin descripción"}
-                      </h3>
+              <div style={styles.field}>
+                <label style={styles.label}>Subtotal</label>
+                <input
+                  value={`S/ ${subtotalPreview.toFixed(2)}`}
+                  disabled
+                  style={{
+                    ...styles.input,
+                    background: "#f8fafc",
+                    fontWeight: "bold",
+                    width: "100%",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+            </div>
 
-                      <div style={styles.badgeRow}>
-                        <span
+            <div
+              style={{
+                ...styles.formFooter,
+                justifyContent: esMovil ? "stretch" : "flex-end"
+              }}
+            >
+              <button
+                onClick={agregarItem}
+                disabled={guardando}
+                style={{
+                  ...styles.addBtn,
+                  width: esMovil ? "100%" : "auto",
+                  minHeight: esMovil ? 42 : "auto",
+                  opacity: guardando ? 0.7 : 1,
+                  cursor: guardando ? "not-allowed" : "pointer"
+                }}
+              >
+                {guardando ? "Guardando..." : "➕ Agregar detalle"}
+              </button>
+            </div>
+          </section>
+        )}
+
+        <section style={styles.listSection}>
+          <div
+            style={{
+              ...styles.listHeader,
+              flexDirection: esMovil ? "column" : "row",
+              alignItems: esMovil ? "flex-start" : "center"
+            }}
+          >
+            <div>
+              <h2
+                style={{
+                  ...styles.sectionTitle,
+                  fontSize: esMovil ? 18 : 20,
+                  lineHeight: 1.2
+                }}
+              >
+                Detalles registrados
+              </h2>
+              <p
+                style={{
+                  ...styles.listSubtitle,
+                  fontSize: esMovil ? 13 : 14,
+                  lineHeight: 1.4
+                }}
+              >
+                Movimientos asociados a esta actividad de tesorería.
+              </p>
+            </div>
+
+            <div
+              style={{
+                ...styles.counterBadge,
+                alignSelf: esMovil ? "flex-start" : "center"
+              }}
+            >
+              {items.length} registro{items.length === 1 ? "" : "s"}
+            </div>
+          </div>
+
+          {items.length === 0 && (
+            <div style={styles.empty}>
+              Esta actividad todavía no tiene detalles registrados.
+            </div>
+          )}
+
+          <div style={styles.itemsList}>
+            {items.map((item) => {
+              const tipoStyle = getTipoStyle(item.tipo)
+              const subtotal = Number(item.subtotal || 0)
+              const precioUnitario = Number(item.precio_unitario || 0)
+              const noAfectaSaldo = item.afecta_saldo === false
+              const archivosItem = getArchivosItem(item.id)
+
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    ...styles.itemCard,
+                    flexDirection: esMovil ? "column" : "row"
+                  }}
+                >
+
+                  <div
+                    style={{
+                      ...styles.itemAccent,
+                      background: tipoStyle.color,
+                      width: esMovil ? "100%" : 7,
+                      height: esMovil ? 7 : "auto"
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      ...styles.itemContent,
+                      padding: esMovil ? 14 : 16
+                    }}
+                  >
+
+                    <div
+                      style={{
+                        ...styles.itemTop,
+                        flexDirection: esMovil ? "column" : "row",
+                        alignItems: esMovil ? "stretch" : "flex-start"
+                      }}
+                    >
+                      <div
+                        style={{
+                          ...styles.itemMainInfo,
+                          width: "100%"
+                        }}
+                      >
+                        <h3
                           style={{
-                            ...styles.tipoBadge,
-                            color: tipoStyle.color,
-                            background: tipoStyle.background,
-                            borderColor: tipoStyle.border
+                            ...styles.itemTitle,
+                            fontSize: esMovil ? 16 : 18,
+                            lineHeight: 1.25
                           }}
                         >
-                          {tipoStyle.label}
-                        </span>
+                          {item.descripcion || "Sin descripción"}
+                        </h3>
 
-                        <span style={styles.categoriaBadge}>
-                          {formatoCategoria(item.categoria)}
-                        </span>
-
-                        {noAfectaSaldo && (
-                          <span style={styles.noSaldoBadge}>
-                            No afecta saldo
+                        <div style={styles.badgeRow}>
+                          <span
+                            style={{
+                              ...styles.tipoBadge,
+                              color: tipoStyle.color,
+                              background: tipoStyle.background,
+                              borderColor: tipoStyle.border
+                            }}
+                          >
+                            {tipoStyle.label}
                           </span>
-                        )}
 
-                        {archivosItem.length > 0 && (
-                          <span style={styles.archivoCountBadge}>
-                            📎 {archivosItem.length} archivo{archivosItem.length === 1 ? "" : "s"}
+                          <span style={styles.categoriaBadge}>
+                            {formatoCategoria(item.categoria)}
                           </span>
-                        )}
+
+                          {noAfectaSaldo && (
+                            <span style={styles.noSaldoBadge}>
+                              No afecta saldo
+                            </span>
+                          )}
+
+                          {archivosItem.length > 0 && (
+                            <span style={styles.archivoCountBadge}>
+                              📎 {archivosItem.length} archivo{archivosItem.length === 1 ? "" : "s"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          ...styles.amountBox,
+                          width: esMovil ? "100%" : "auto",
+                          textAlign: esMovil ? "left" : "right",
+                          boxSizing: "border-box"
+                        }}
+                      >
+                        <span style={styles.amountLabel}>Subtotal</span>
+                        <strong
+                          style={{
+                            ...styles.amountValue,
+                            color: tipoStyle.color,
+                            fontSize: esMovil ? 18 : 20
+                          }}
+                        >
+                          {tipoStyle.signo} S/ {subtotal.toFixed(2)}
+                        </strong>
                       </div>
                     </div>
 
-                    <div style={styles.amountBox}>
-                      <span style={styles.amountLabel}>Subtotal</span>
-                      <strong
+                    <div
+                      style={{
+                        ...styles.itemMetaGrid,
+                        gridTemplateColumns: columnasMeta
+                      }}
+                    >
+                      <div style={styles.metaBox}>
+                        <span style={styles.metaLabel}>Cantidad</span>
+                        <b style={styles.metaValue}>{item.cantidad}</b>
+                      </div>
+
+                      <div style={styles.metaBox}>
+                        <span style={styles.metaLabel}>Monto unitario</span>
+                        <b style={styles.metaValue}>
+                          S/ {precioUnitario.toFixed(2)}
+                        </b>
+                      </div>
+
+                      <div style={styles.metaBox}>
+                        <span style={styles.metaLabel}>Categoría original</span>
+                        <b
+                          style={{
+                            ...styles.metaValue,
+                            wordBreak: "break-word"
+                          }}
+                        >
+                          {item.categoria}
+                        </b>
+                      </div>
+                    </div>
+
+                    <div style={styles.archivosBox}>
+                      <div
                         style={{
-                          ...styles.amountValue,
-                          color: tipoStyle.color
+                          ...styles.archivosHeader,
+                          flexDirection: esMovil ? "column" : "row",
+                          alignItems: esMovil ? "stretch" : "center"
                         }}
                       >
-                        {tipoStyle.signo} S/ {subtotal.toFixed(2)}
-                      </strong>
-                    </div>
-                  </div>
+                        <b>Comprobantes / sustentos</b>
 
-                  <div style={styles.itemMetaGrid}>
-                    <div style={styles.metaBox}>
-                      <span style={styles.metaLabel}>Cantidad</span>
-                      <b style={styles.metaValue}>{item.cantidad}</b>
-                    </div>
+                        {!estaFinalizada && (
+                          <button
+                            style={{
+                              ...styles.smallAttachBtn,
+                              width: esMovil ? "100%" : "auto",
+                              minHeight: esMovil ? 38 : "auto"
+                            }}
+                            onClick={() => abrirModalArchivo(item)}
+                          >
+                            📎 Agregar archivo
+                          </button>
+                        )}
+                      </div>
 
-                    <div style={styles.metaBox}>
-                      <span style={styles.metaLabel}>Monto unitario</span>
-                      <b style={styles.metaValue}>
-                        S/ {precioUnitario.toFixed(2)}
-                      </b>
-                    </div>
+                      {archivosItem.length === 0 && (
+                        <p style={styles.noFilesText}>
+                          No hay archivos adjuntos para este detalle.
+                        </p>
+                      )}
 
-                    <div style={styles.metaBox}>
-                      <span style={styles.metaLabel}>Categoría original</span>
-                      <b style={styles.metaValue}>{item.categoria}</b>
-                    </div>
-                  </div>
+                      {archivosItem.length > 0 && (
+                        <div style={styles.archivosList}>
+                          {archivosItem.map((archivo) => (
+                            <div
+                              key={archivo.id}
+                              style={{
+                                ...styles.archivoItem,
+                                flexDirection: esMovil ? "column" : "row",
+                                alignItems: esMovil ? "stretch" : "center"
+                              }}
+                            >
+                              <div
+                                style={{
+                                  ...styles.archivoInfo,
+                                  width: "100%"
+                                }}
+                              >
+                                <span style={styles.archivoTipoBadge}>
+                                  {formatoTipoArchivo(archivo.tipo_archivo)}
+                                </span>
 
-                  <div style={styles.archivosBox}>
-                    <div style={styles.archivosHeader}>
-                      <b>Comprobantes / sustentos</b>
+                                <a
+                                  href={archivo.archivo_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={styles.archivoLink}
+                                >
+                                  {archivo.nombre_archivo}
+                                </a>
 
-                      {!estaFinalizada && (
-                        <button
-                          style={styles.smallAttachBtn}
-                          onClick={() => abrirModalArchivo(item)}
-                        >
-                          📎 Agregar archivo
-                        </button>
+                                <span style={styles.archivoFecha}>
+                                  {formatoFechaHora(archivo.created_at)}
+                                </span>
+
+                                {archivo.observacion && (
+                                  <p style={styles.archivoObs}>
+                                    {archivo.observacion}
+                                  </p>
+                                )}
+                              </div>
+
+                              {!estaFinalizada && (
+                                <button
+                                  style={{
+                                    ...styles.deleteFileBtn,
+                                    width: esMovil ? "100%" : "auto",
+                                    minHeight: esMovil ? 38 : "auto"
+                                  }}
+                                  onClick={() => eliminarArchivoItem(archivo)}
+                                >
+                                  Eliminar
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
 
-                    {archivosItem.length === 0 && (
-                      <p style={styles.noFilesText}>
-                        No hay archivos adjuntos para este detalle.
-                      </p>
-                    )}
-
-                    {archivosItem.length > 0 && (
-                      <div style={styles.archivosList}>
-                        {archivosItem.map((archivo) => (
-                          <div key={archivo.id} style={styles.archivoItem}>
-                            <div style={styles.archivoInfo}>
-                              <span style={styles.archivoTipoBadge}>
-                                {formatoTipoArchivo(archivo.tipo_archivo)}
-                              </span>
-
-                              <a
-                                href={archivo.archivo_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={styles.archivoLink}
-                              >
-                                {archivo.nombre_archivo}
-                              </a>
-
-                              <span style={styles.archivoFecha}>
-                                {formatoFechaHora(archivo.created_at)}
-                              </span>
-
-                              {archivo.observacion && (
-                                <p style={styles.archivoObs}>
-                                  {archivo.observacion}
-                                </p>
-                              )}
-                            </div>
-
-                            {!estaFinalizada && (
-                              <button
-                                style={styles.deleteFileBtn}
-                                onClick={() => eliminarArchivoItem(archivo)}
-                              >
-                                Eliminar
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
+
+                  {!estaFinalizada && (
+                    <div
+                      style={{
+                        ...styles.itemActions,
+                        flexDirection: esMovil ? "row" : "column",
+                        width: esMovil ? "100%" : "auto",
+                        padding: esMovil ? "0 14px 14px" : "0 14px",
+                        borderLeft: esMovil ? "none" : "1px solid #f1f5f9",
+                        borderTop: esMovil ? "1px solid #f1f5f9" : "none",
+                        boxSizing: "border-box"
+                      }}
+                    >
+                      <button
+                        style={{
+                          ...styles.attachBtn,
+                          flex: esMovil ? 1 : "initial",
+                          minHeight: esMovil ? 40 : "auto"
+                        }}
+                        onClick={() => abrirModalArchivo(item)}
+                      >
+                        📎 Archivo
+                      </button>
+
+                      <button
+                        style={{
+                          ...styles.deleteBtn,
+                          flex: esMovil ? 1 : "initial",
+                          minHeight: esMovil ? 40 : "auto"
+                        }}
+                        onClick={() => eliminarItem(item.id)}
+                      >
+                        🗑 Eliminar
+                      </button>
+                    </div>
+                  )}
 
                 </div>
+              )
+            })}
+          </div>
+        </section>
 
-                {!estaFinalizada && (
-                  <div style={styles.itemActions}>
-                    <button
-                      style={styles.attachBtn}
-                      onClick={() => abrirModalArchivo(item)}
-                    >
-                      📎 Archivo
-                    </button>
-
-                    <button
-                      style={styles.deleteBtn}
-                      onClick={() => eliminarItem(item.id)}
-                    >
-                      🗑 Eliminar
-                    </button>
-                  </div>
-                )}
-
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      {modalArchivo && (
-        <div style={styles.overlay}>
-          <div style={styles.modal}>
-            <h2 style={styles.modalTitle}>Agregar comprobante</h2>
-
-            <p style={styles.modalSubtitle}>
-              Detalle: <b>{modalArchivo.descripcion}</b>
-            </p>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Tipo de archivo</label>
-              <select
-                value={archivoTipo}
-                onChange={(e) => setArchivoTipo(e.target.value)}
-                style={styles.input}
-              >
-                <option value="BOLETA">Boleta</option>
-                <option value="FACTURA">Factura</option>
-                <option value="RECIBO">Recibo</option>
-                <option value="VOUCHER">Voucher</option>
-                <option value="OTRO">Otro</option>
-              </select>
-            </div>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Archivo</label>
-              <input
-                type="file"
-                accept="image/*,.pdf,.doc,.docx"
-                onChange={(e) => setArchivoFile(e.target.files?.[0] || null)}
-                style={styles.input}
-              />
-
-              {archivoFile && (
-                <p style={styles.fileHelp}>
-                  Archivo seleccionado: <b>{archivoFile.name}</b>
-                </p>
-              )}
-            </div>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Observación</label>
-              <input
-                value={archivoObservacion}
-                onChange={(e) => setArchivoObservacion(e.target.value)}
-                placeholder="Ejemplo: Boleta por compra de materiales"
-                style={styles.input}
-              />
-            </div>
-
-            <div style={styles.modalActions}>
-              <button
-                onClick={subirArchivoItem}
-                disabled={subiendoArchivo}
+        {modalArchivo && (
+          <div
+            style={{
+              ...styles.overlay,
+              padding: esMovil ? 12 : 20
+            }}
+          >
+            <div
+              style={{
+                ...styles.modal,
+                padding: esMovil ? 16 : 22,
+                maxHeight: esMovil ? "92vh" : "auto",
+                overflowY: esMovil ? "auto" : "visible"
+              }}
+            >
+              <h2
                 style={{
-                  ...styles.addBtn,
-                  opacity: subiendoArchivo ? 0.7 : 1,
-                  cursor: subiendoArchivo ? "not-allowed" : "pointer"
+                  ...styles.modalTitle,
+                  fontSize: esMovil ? 20 : 22,
+                  lineHeight: 1.2
                 }}
               >
-                {subiendoArchivo ? "Subiendo archivo..." : "Guardar archivo"}
-              </button>
+                Agregar comprobante
+              </h2>
 
-              <button
-                onClick={cerrarModalArchivo}
-                disabled={subiendoArchivo}
-                style={styles.cancelBtn}
+              <p
+                style={{
+                  ...styles.modalSubtitle,
+                  lineHeight: 1.4
+                }}
               >
-                Cancelar
-              </button>
+                Detalle: <b>{modalArchivo.descripcion}</b>
+              </p>
+
+              <div style={styles.field}>
+                <label style={styles.label}>Tipo de archivo</label>
+                <select
+                  value={archivoTipo}
+                  onChange={(e) => setArchivoTipo(e.target.value)}
+                  style={{
+                    ...styles.input,
+                    width: "100%",
+                    boxSizing: "border-box"
+                  }}
+                >
+                  <option value="BOLETA">Boleta</option>
+                  <option value="FACTURA">Factura</option>
+                  <option value="RECIBO">Recibo</option>
+                  <option value="VOUCHER">Voucher</option>
+                  <option value="OTRO">Otro</option>
+                </select>
+              </div>
+
+              <div style={styles.field}>
+                <label style={styles.label}>Archivo</label>
+                <input
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={(e) => setArchivoFile(e.target.files?.[0] || null)}
+                  style={{
+                    ...styles.input,
+                    width: "100%",
+                    boxSizing: "border-box"
+                  }}
+                />
+
+                {archivoFile && (
+                  <p style={styles.fileHelp}>
+                    Archivo seleccionado: <b>{archivoFile.name}</b>
+                  </p>
+                )}
+              </div>
+
+              <div style={styles.field}>
+                <label style={styles.label}>Observación</label>
+                <input
+                  value={archivoObservacion}
+                  onChange={(e) => setArchivoObservacion(e.target.value)}
+                  placeholder="Ejemplo: Boleta por compra de materiales"
+                  style={{
+                    ...styles.input,
+                    width: "100%",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  ...styles.modalActions,
+                  flexDirection: esMovil ? "column" : "row"
+                }}
+              >
+                <button
+                  onClick={subirArchivoItem}
+                  disabled={subiendoArchivo}
+                  style={{
+                    ...styles.addBtn,
+                    width: esMovil ? "100%" : "auto",
+                    minHeight: esMovil ? 42 : "auto",
+                    opacity: subiendoArchivo ? 0.7 : 1,
+                    cursor: subiendoArchivo ? "not-allowed" : "pointer"
+                  }}
+                >
+                  {subiendoArchivo ? "Subiendo archivo..." : "Guardar archivo"}
+                </button>
+
+                <button
+                  onClick={cerrarModalArchivo}
+                  disabled={subiendoArchivo}
+                  style={{
+                    ...styles.cancelBtn,
+                    width: esMovil ? "100%" : "auto",
+                    minHeight: esMovil ? 42 : "auto",
+                    opacity: subiendoArchivo ? 0.7 : 1,
+                    cursor: subiendoArchivo ? "not-allowed" : "pointer"
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
 
     </div>
   )
@@ -932,6 +1292,10 @@ const styles = {
     fontFamily: "Arial",
     background: "#f4f6fb",
     minHeight: "100vh"
+  },
+
+  pageWrapper: {
+    width: "100%"
   },
 
   backBtn: {
@@ -971,6 +1335,14 @@ const styles = {
     display: "flex",
     gap: 35,
     flexWrap: "wrap"
+  },
+
+  headerInfoBox: {
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: 12,
+    padding: "10px 12px",
+    boxSizing: "border-box"
   },
 
   labelText: {

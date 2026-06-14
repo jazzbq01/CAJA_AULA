@@ -17,6 +17,35 @@ export default function Dashboard() {
   const [alumnosData, setAlumnosData] = useState([])
   const [actividadesMes, setActividadesMes] = useState([])
 
+  /* =========================
+     ✅ RESPONSIVE
+  ========================= */
+  const getWindowWidth = () => {
+    if (typeof window === "undefined") return 1200
+    return window.innerWidth
+  }
+
+  const [anchoPantalla, setAnchoPantalla] = useState(getWindowWidth())
+
+  useEffect(() => {
+    const handleResize = () => {
+      setAnchoPantalla(getWindowWidth())
+    }
+
+    window.addEventListener("resize", handleResize)
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [])
+
+  const esMovil = anchoPantalla < 640
+  const esTablet = anchoPantalla >= 640 && anchoPantalla < 1024
+  const esDesktop = anchoPantalla >= 1024
+
+  const chartHeight = esMovil ? 220 : esTablet ? 240 : 250
+  const chartInnerWidth = esMovil ? 520 : "100%"
+
   const mesesOrden = [
     "Mar", "Abr", "May", "Jun",
     "Jul", "Ago", "Sep", "Oct",
@@ -134,83 +163,266 @@ export default function Dashboard() {
   }, [])
 
   return (
-    <div style={{ padding: 10 }}>
+    <div
+      style={{
+        ...styles.container,
+        padding: esMovil ? 12 : esTablet ? 16 : 20,
+        boxSizing: "border-box",
+        overflowX: "hidden"
+      }}
+    >
 
-      <h1>📊 Dashboard</h1>
+      <div
+        style={{
+          ...styles.pageWrapper,
+          maxWidth: esDesktop ? 1200 : "100%",
+          margin: "0 auto",
+          width: "100%",
+          boxSizing: "border-box"
+        }}
+      >
 
-      {/* TOTAL */}
-      <div style={{ background: "white", padding: 20, borderRadius: 10 }}>
-        <h2>Total Aula</h2>
-        <h1>💰 S/ {total}</h1>
-      </div>
+        <h1
+          style={{
+            ...styles.title,
+            fontSize: esMovil ? 24 : esTablet ? 28 : 32,
+            lineHeight: 1.2
+          }}
+        >
+          📊 Dashboard
+        </h1>
 
-      {/* GASTOS */}
-      <div style={{ background: "white", padding: 20, borderRadius: 10, marginTop: 20 }}>
-        <h3>📊 Gastos por mes</h3>
-
-        <div style={{ width: "100%", height: 250 }}>
-          <ResponsiveContainer>
-            <BarChart data={movimientosMes}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="gastos">
-                {movimientosMes.map((e, i) => (
-                  <Cell key={i} fill={e.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        {/* TOTAL */}
+        <div
+          style={{
+            ...styles.totalCard,
+            padding: esMovil ? 16 : 20,
+            boxSizing: "border-box"
+          }}
+        >
+          <h2
+            style={{
+              ...styles.cardTitle,
+              fontSize: esMovil ? 18 : 22
+            }}
+          >
+            Total Aula
+          </h2>
+          <h1
+            style={{
+              ...styles.totalText,
+              fontSize: esMovil ? 28 : esTablet ? 34 : 38,
+              wordBreak: "break-word"
+            }}
+          >
+            💰 S/ {total}
+          </h1>
         </div>
-      </div>
 
-      {/* 🆕 ACTIVIDADES POR MES */}
-      <div style={{ background: "white", padding: 20, borderRadius: 10, marginTop: 20 }}>
-        <h3>📚 Actividades por mes</h3>
+        {/* GASTOS */}
+        <div
+          style={{
+            ...styles.chartCard,
+            padding: esMovil ? 14 : 20,
+            boxSizing: "border-box"
+          }}
+        >
+          <h3
+            style={{
+              ...styles.chartTitle,
+              fontSize: esMovil ? 17 : 19
+            }}
+          >
+            📊 Gastos por mes
+          </h3>
 
-        <div style={{ width: "100%", height: 250 }}>
-          <ResponsiveContainer>
-            <BarChart data={actividadesMes}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="actividades">
-                {actividadesMes.map((e, i) => (
-                  <Cell key={i} fill={e.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* ALUMNOS */}
-      <div style={{ background: "white", padding: 20, borderRadius: 10, marginTop: 20 }}>
-        <h3>👨‍🎓 Alumnos</h3>
-
-        <div style={{ width: "100%", height: 250 }}>
-          <ResponsiveContainer>
-            <BarChart data={alumnosData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-
-              <Bar dataKey="value">
-                {alumnosData.map((e, i) => (
-                  <Cell
-                    key={i}
-                    fill={e.name === "Con saldo" ? "#22c55e" : "#ef4444"}
+          <div style={styles.chartScroll}>
+            <div
+              style={{
+                width: chartInnerWidth,
+                height: chartHeight,
+                minWidth: esMovil ? 520 : 0
+              }}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={movimientosMes}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="mes"
+                    tick={{ fontSize: esMovil ? 11 : 12 }}
+                    interval={0}
                   />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                  <YAxis tick={{ fontSize: esMovil ? 11 : 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="gastos">
+                    {movimientosMes.map((e, i) => (
+                      <Cell key={i} fill={e.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
+
+        {/* 🆕 ACTIVIDADES POR MES */}
+        <div
+          style={{
+            ...styles.chartCard,
+            padding: esMovil ? 14 : 20,
+            boxSizing: "border-box"
+          }}
+        >
+          <h3
+            style={{
+              ...styles.chartTitle,
+              fontSize: esMovil ? 17 : 19
+            }}
+          >
+            📚 Actividades por mes
+          </h3>
+
+          <div style={styles.chartScroll}>
+            <div
+              style={{
+                width: chartInnerWidth,
+                height: chartHeight,
+                minWidth: esMovil ? 520 : 0
+              }}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={actividadesMes}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="mes"
+                    tick={{ fontSize: esMovil ? 11 : 12 }}
+                    interval={0}
+                  />
+                  <YAxis tick={{ fontSize: esMovil ? 11 : 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="actividades">
+                    {actividadesMes.map((e, i) => (
+                      <Cell key={i} fill={e.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* ALUMNOS */}
+        <div
+          style={{
+            ...styles.chartCard,
+            padding: esMovil ? 14 : 20,
+            boxSizing: "border-box"
+          }}
+        >
+          <h3
+            style={{
+              ...styles.chartTitle,
+              fontSize: esMovil ? 17 : 19
+            }}
+          >
+            👨‍🎓 Alumnos
+          </h3>
+
+          <div style={styles.chartScroll}>
+            <div
+              style={{
+                width: "100%",
+                height: chartHeight,
+                minWidth: esMovil ? 320 : 0
+              }}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={alumnosData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: esMovil ? 11 : 12 }}
+                    interval={0}
+                  />
+                  <YAxis tick={{ fontSize: esMovil ? 11 : 12 }} />
+                  <Tooltip />
+
+                  <Bar dataKey="value">
+                    {alumnosData.map((e, i) => (
+                      <Cell
+                        key={i}
+                        fill={e.name === "Con saldo" ? "#22c55e" : "#ef4444"}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>
   )
+}
+
+const styles = {
+  container: {
+    padding: 10,
+    fontFamily: "Arial",
+    background: "#f4f6fb",
+    minHeight: "100vh"
+  },
+
+  pageWrapper: {
+    width: "100%"
+  },
+
+  title: {
+    margin: "0 0 18px 0",
+    color: "#0f172a",
+    fontWeight: "bold"
+  },
+
+  totalCard: {
+    background: "white",
+    padding: 20,
+    borderRadius: 14,
+    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.06)",
+    border: "1px solid #e2e8f0"
+  },
+
+  cardTitle: {
+    margin: 0,
+    color: "#334155"
+  },
+
+  totalText: {
+    margin: "10px 0 0",
+    color: "#0f172a",
+    lineHeight: 1.2
+  },
+
+  chartCard: {
+    background: "white",
+    padding: 20,
+    borderRadius: 14,
+    marginTop: 20,
+    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.06)",
+    border: "1px solid #e2e8f0"
+  },
+
+  chartTitle: {
+    margin: "0 0 14px 0",
+    color: "#0f172a",
+    lineHeight: 1.2
+  },
+
+  chartScroll: {
+    width: "100%",
+    overflowX: "auto",
+    overflowY: "hidden",
+    WebkitOverflowScrolling: "touch"
+  }
 }

@@ -7,6 +7,24 @@ export default function Reportes() {
   const [search, setSearch] = useState("")
   const navigate = useNavigate()
 
+  /* =========================
+     ✅ RESPONSIVE
+  ========================= */
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  )
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+
+    window.addEventListener("resize", handleResize)
+
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
+  const isMobile = windowWidth <= 600
+  const isTablet = windowWidth > 600 && windowWidth <= 900
+
   useEffect(() => {
     load()
   }, [])
@@ -25,42 +43,139 @@ export default function Reportes() {
   )
 
   return (
-    <div style={styles.container}>
+    <div
+      style={{
+        ...styles.container,
+        padding: isMobile ? 12 : isTablet ? 16 : 20,
+        boxSizing: "border-box",
+        overflowX: "hidden",
+      }}
+    >
 
       {/* HEADER */}
-      <div style={styles.header}>
-        <h1 style={styles.title}>📊 Reportes</h1>
-        <p style={styles.subtitle}>
+      <div
+        style={{
+          ...styles.header,
+          maxWidth: 1100,
+          margin: "0 auto 20px auto",
+        }}
+      >
+        <h1
+          style={{
+            ...styles.title,
+            fontSize: isMobile ? 24 : 26,
+            lineHeight: 1.2,
+          }}
+        >
+          📊 Reportes
+        </h1>
+        <p
+          style={{
+            ...styles.subtitle,
+            fontSize: isMobile ? 12 : 13,
+            lineHeight: 1.4,
+          }}
+        >
           Gestión de alumnos y análisis de información
         </p>
       </div>
 
       {/* SEARCH (SOLO ESTO SE QUEDA) */}
-      <div style={styles.panel}>
+      <div
+        style={{
+          ...styles.panel,
+          maxWidth: 1100,
+          margin: "0 auto 20px auto",
+          padding: isMobile ? 12 : 14,
+          boxSizing: "border-box",
+        }}
+      >
         <input
           placeholder="🔎 Buscar alumno..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={styles.search}
+          style={{
+            ...styles.search,
+            fontSize: isMobile ? 14 : 15,
+            boxSizing: "border-box",
+          }}
         />
       </div>
 
       {/* LISTA */}
-      <div style={styles.list}>
+      <div
+        style={{
+          ...styles.list,
+          maxWidth: 1100,
+          margin: "0 auto",
+        }}
+      >
         {filtered.map((a) => (
-          <div key={a.id} style={styles.card}>
+          <div
+            key={a.id}
+            style={{
+              ...styles.card,
+              flexDirection: isMobile ? "column" : "row",
+              alignItems: isMobile ? "stretch" : "center",
+              gap: isMobile ? 12 : 10,
+              padding: isMobile ? 12 : 14,
+              boxSizing: "border-box",
+            }}
+          >
 
-            <div style={styles.left}>
-              <div style={styles.avatar}>👤</div>
+            <div
+              style={{
+                ...styles.left,
+                width: "100%",
+                minWidth: 0,
+              }}
+            >
+              <div
+                style={{
+                  ...styles.avatar,
+                  width: isMobile ? 36 : 38,
+                  height: isMobile ? 36 : 38,
+                  minWidth: isMobile ? 36 : 38,
+                  fontSize: isMobile ? 17 : 18,
+                }}
+              >
+                👤
+              </div>
 
-              <div>
-                <div style={styles.name}>{a.nombre}</div>
-                <div style={styles.meta}>Alumno registrado</div>
+              <div
+                style={{
+                  minWidth: 0,
+                  width: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    ...styles.name,
+                    fontSize: isMobile ? 14 : 15,
+                    wordBreak: "break-word",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {a.nombre}
+                </div>
+                <div
+                  style={{
+                    ...styles.meta,
+                    fontSize: isMobile ? 11 : 12,
+                  }}
+                >
+                  Alumno registrado
+                </div>
               </div>
             </div>
 
             <button
-              style={styles.button}
+              style={{
+                ...styles.button,
+                width: isMobile ? "100%" : "auto",
+                minHeight: isMobile ? 42 : "auto",
+                whiteSpace: "nowrap",
+              }}
               onClick={() => navigate(`/alumnos/${a.id}`)}
             >
               Ver detalle →

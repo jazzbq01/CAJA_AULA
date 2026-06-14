@@ -11,6 +11,24 @@ export default function AlumnoDetalle() {
   const [mov, setMov] = useState([])
   const [alumno, setAlumno] = useState(null)
 
+  /* =========================
+     ✅ RESPONSIVE
+  ========================= */
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  )
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+
+    window.addEventListener("resize", handleResize)
+
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
+  const isMobile = windowWidth <= 600
+  const isTablet = windowWidth > 600 && windowWidth <= 900
+
   useEffect(() => {
     load()
   }, [])
@@ -80,61 +98,188 @@ export default function AlumnoDetalle() {
   }
 
   return (
-    <div style={styles.container}>
+    <div
+      style={{
+        ...styles.container,
+        padding: isMobile ? 12 : isTablet ? 16 : 20,
+        boxSizing: "border-box",
+        overflowX: "hidden",
+      }}
+    >
 
       {/* =========================
           VISTA NORMAL
       ========================= */}
-      <div className="no-print">
+      <div
+        className="no-print"
+        style={{
+          width: "100%",
+          maxWidth: 1100,
+          margin: "0 auto",
+          boxSizing: "border-box",
+        }}
+      >
 
-        <h1 style={styles.title}>📄 Estado de Cuenta</h1>
+        <h1
+          style={{
+            ...styles.title,
+            fontSize: isMobile ? 24 : isTablet ? 25 : 26,
+            lineHeight: 1.2,
+          }}
+        >
+          📄 Estado de Cuenta
+        </h1>
 
         {alumno && (
-          <div style={styles.card}>
+          <div
+            style={{
+              ...styles.card,
+              padding: isMobile ? 14 : 18,
+              boxSizing: "border-box",
+            }}
+          >
 
-            <h2 style={{ margin: 0 }}>👤 {alumno.nombre}</h2>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: isMobile ? 20 : 24,
+                lineHeight: 1.2,
+                wordBreak: "break-word",
+              }}
+            >
+              👤 {alumno.nombre}
+            </h2>
 
-            <div style={styles.grid}>
+            <div
+              style={{
+                ...styles.grid,
+                gridTemplateColumns: isMobile
+                  ? "1fr"
+                  : isTablet
+                  ? "1fr 1fr"
+                  : "1fr 1fr 1fr",
+              }}
+            >
               <div style={styles.ingresoBox}>
                 📈 Ingresos
-                <div style={styles.amount}>S/ {ingresos}</div>
+                <div
+                  style={{
+                    ...styles.amount,
+                    fontSize: isMobile ? 17 : 18,
+                  }}
+                >
+                  S/ {ingresos}
+                </div>
               </div>
 
               <div style={styles.gastoBox}>
                 📉 Gastos
-                <div style={styles.amount}>S/ {gastos}</div>
+                <div
+                  style={{
+                    ...styles.amount,
+                    fontSize: isMobile ? 17 : 18,
+                  }}
+                >
+                  S/ {gastos}
+                </div>
               </div>
 
-              <div style={styles.totalBox}>
+              <div
+                style={{
+                  ...styles.totalBox,
+                  gridColumn: isTablet ? "1 / -1" : "auto",
+                }}
+              >
                 💰 Saldo final
-                <div style={styles.amount}>S/ {saldoFinal}</div>
+                <div
+                  style={{
+                    ...styles.amount,
+                    fontSize: isMobile ? 17 : 18,
+                  }}
+                >
+                  S/ {saldoFinal}
+                </div>
               </div>
             </div>
 
-            <button onClick={print} style={styles.button}>
-              🖨 Imprimir
-            </button>
+            <div
+              style={{
+                ...styles.actions,
+                flexDirection: isMobile ? "column" : "row",
+                gap: isMobile ? 8 : 10,
+              }}
+            >
+              <button
+                onClick={print}
+                style={{
+                  ...styles.button,
+                  width: isMobile ? "100%" : "auto",
+                  marginRight: isMobile ? 0 : 10,
+                  boxSizing: "border-box",
+                }}
+              >
+                🖨 Imprimir
+              </button>
 
-            <button onClick={descargarPDF} style={styles.buttonPdf}>
-              📥 Descargar PDF
-            </button>
+              <button
+                onClick={descargarPDF}
+                style={{
+                  ...styles.buttonPdf,
+                  width: isMobile ? "100%" : "auto",
+                  boxSizing: "border-box",
+                }}
+              >
+                📥 Descargar PDF
+              </button>
+            </div>
 
           </div>
         )}
 
-        <h3 style={styles.subtitle}>📜 Historial</h3>
+        <h3
+          style={{
+            ...styles.subtitle,
+            fontSize: isMobile ? 18 : 20,
+          }}
+        >
+          📜 Historial
+        </h3>
 
         <div style={styles.list}>
           {mov.map(m => (
-            <div key={m.id} style={styles.mov}>
-              <div>
-                <b>{m.concepto}</b>
+            <div
+              key={m.id}
+              style={{
+                ...styles.mov,
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "flex-start" : "center",
+                gap: isMobile ? 8 : 10,
+                boxSizing: "border-box",
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  minWidth: 0,
+                }}
+              >
+                <b
+                  style={{
+                    wordBreak: "break-word",
+                    fontSize: isMobile ? 14 : 15,
+                  }}
+                >
+                  {m.concepto}
+                </b>
                 <div style={styles.type}>{m.tipo}</div>
               </div>
 
               <div style={{
                 ...styles.money,
-                color: m.tipo === "INGRESO" ? "#16a34a" : "#ef4444"
+                color: m.tipo === "INGRESO" ? "#16a34a" : "#ef4444",
+                alignSelf: isMobile ? "flex-end" : "center",
+                whiteSpace: "nowrap",
+                fontSize: isMobile ? 14 : 14,
               }}>
                 S/ {m.monto}
               </div>
@@ -161,12 +306,35 @@ export default function AlumnoDetalle() {
             position: absolute;
             left: -9999px;
             top: 0;
+            width: 794px;
+            background: white;
           }
         }
 
         @media print {
           .no-print { display: none; }
           .print-area { display: block; }
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        @media screen and (max-width: 600px) {
+          body {
+            margin: 0;
+            overflow-x: hidden;
+          }
+
+          button {
+            min-height: 42px;
+          }
+        }
+
+        @media screen and (min-width: 601px) and (max-width: 900px) {
+          body {
+            margin: 0;
+          }
         }
       `}</style>
 
@@ -284,5 +452,12 @@ const styles = {
   money: {
     fontWeight: "bold",
     fontSize: 14,
+  },
+
+  actions: {
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    marginTop: 10,
   },
 }

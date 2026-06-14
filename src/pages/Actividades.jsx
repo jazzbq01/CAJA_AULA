@@ -6,6 +6,24 @@ export default function Actividades() {
   const [monto, setMonto] = useState(0)
   const [gastos, setGastos] = useState([])
 
+  /* =========================
+     ✅ RESPONSIVE
+  ========================= */
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  )
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+
+    window.addEventListener("resize", handleResize)
+
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
+  const isMobile = windowWidth <= 600
+  const isTablet = windowWidth > 600 && windowWidth <= 900
+
   useEffect(() => {
     load()
   }, [])
@@ -105,80 +123,209 @@ const aplicarGasto = async () => {
 }
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>📉 Actividades (Gastos)</h1>
+    <div
+      style={{
+        ...styles.container,
+        padding: isMobile ? 12 : isTablet ? 16 : 20,
+        boxSizing: "border-box",
+        overflowX: "hidden",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1100,
+          margin: "0 auto",
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        <h1
+          style={{
+            ...styles.title,
+            fontSize: isMobile ? 23 : isTablet ? 25 : 26,
+            lineHeight: 1.2,
+            marginBottom: isMobile ? 14 : 20,
+          }}
+        >
+          📉 Actividades (Gastos)
+        </h1>
 
-      {/* FORM */}
-      <div style={styles.formCard}>
+        {/* FORM */}
+        <div
+          style={{
+            ...styles.formCard,
+            padding: isMobile ? 14 : isTablet ? 16 : 18,
+            boxSizing: "border-box",
+          }}
+        >
 
-        {/* HEADER DEL BLOQUE */}
-        <div style={styles.formHeader}>
-          <div>
-            <h3 style={styles.formTitle}>➕ Registrar actividad</h3>
-            <p style={styles.formSubtitle}>
-              Agrega un gasto que será distribuido automáticamente
-            </p>
+          {/* HEADER DEL BLOQUE */}
+          <div style={styles.formHeader}>
+            <div>
+              <h3
+                style={{
+                  ...styles.formTitle,
+                  fontSize: isMobile ? 17 : 18,
+                  lineHeight: 1.2,
+                }}
+              >
+                ➕ Registrar actividad
+              </h3>
+              <p
+                style={{
+                  ...styles.formSubtitle,
+                  lineHeight: 1.4,
+                }}
+              >
+                Agrega un gasto que será distribuido automáticamente
+              </p>
+            </div>
           </div>
+
+          {/* INPUTS */}
+          <div
+            style={{
+              ...styles.formGrid,
+              gridTemplateColumns: isMobile
+                ? "1fr"
+                : isTablet
+                ? "1fr 1fr"
+                : "2fr 1fr auto",
+              gap: isMobile ? 10 : 12,
+            }}
+          >
+
+            {/* NOMBRE */}
+            <div style={styles.field}>
+              <label style={styles.label}>Actividad</label>
+              <input
+                placeholder="Ej: Paseo, material, celebración..."
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                style={{
+                  ...styles.inputNombre,
+                  width: "100%",
+                  minWidth: 0,
+                  boxSizing: "border-box",
+                  fontSize: isMobile ? 14 : 15,
+                }}
+              />
+            </div>
+
+            {/* MONTO */}
+            <div style={styles.field}>
+              <label style={styles.label}>Monto</label>
+              <input
+                type="number"
+                placeholder="S/ 0"
+                value={monto}
+                onChange={(e) => setMonto(e.target.value)}
+                style={{
+                  ...styles.input,
+                  width: "100%",
+                  boxSizing: "border-box",
+                  fontSize: isMobile ? 14 : 15,
+                }}
+              />
+            </div>
+
+            {/* BOTÓN */}
+            <div
+              style={{
+                ...styles.buttonBox,
+                gridColumn: isMobile || isTablet ? "1 / -1" : "auto",
+                width: "100%",
+              }}
+            >
+              <button
+                onClick={aplicarGasto}
+                style={{
+                  ...styles.button,
+                  width: isMobile || isTablet ? "100%" : "auto",
+                  minHeight: isMobile ? 42 : "auto",
+                  boxSizing: "border-box",
+                }}
+              >
+                ➖ Registrar gasto
+              </button>
+            </div>
+
+          </div>
+
         </div>
 
-        {/* INPUTS */}
-        <div style={styles.formGrid}>
+        {/* LISTA DE GASTOS */}
+        <h3
+          style={{
+            marginTop: 20,
+            fontSize: isMobile ? 18 : 20,
+            lineHeight: 1.2,
+          }}
+        >
+          📜 Historial de gastos
+        </h3>
 
-          {/* NOMBRE */}
-          <div style={styles.field}>
-            <label style={styles.label}>Actividad</label>
-            <input
-              placeholder="Ej: Paseo, material, celebración..."
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              style={styles.inputNombre}
-            />
+        {gastos.length === 0 && (
+          <p
+            style={{
+              color: "#6b7280",
+              fontSize: isMobile ? 14 : 15,
+            }}
+          >
+            No hay gastos registrados aún
+          </p>
+        )}
+
+        {gastos.map((g) => (
+          <div
+            key={g.id}
+            style={{
+              ...styles.card,
+              padding: isMobile ? 12 : 12,
+              boxSizing: "border-box",
+            }}
+          >
+            <div
+              style={{
+                ...styles.row,
+                flexDirection: isMobile ? "column" : "row",
+                gap: isMobile ? 6 : 10,
+                alignItems: isMobile ? "flex-start" : "center",
+              }}
+            >
+              <b
+                style={{
+                  wordBreak: "break-word",
+                  lineHeight: 1.3,
+                  fontSize: isMobile ? 14 : 15,
+                }}
+              >
+                🧾 {g.nombre}
+              </b>
+              <span
+                style={{
+                  ...styles.monto,
+                  alignSelf: isMobile ? "flex-end" : "center",
+                  whiteSpace: "nowrap",
+                  fontSize: isMobile ? 14 : 15,
+                }}
+              >
+                - S/ {g.monto}
+              </span>
+            </div>
+
+            <div
+              style={{
+                ...styles.fecha,
+                fontSize: isMobile ? 11 : 12,
+                lineHeight: 1.3,
+              }}
+            >
+              📅 {new Date(g.created_at).toLocaleString()}
+            </div>
           </div>
-
-          {/* MONTO */}
-          <div style={styles.field}>
-            <label style={styles.label}>Monto</label>
-            <input
-              type="number"
-              placeholder="S/ 0"
-              value={monto}
-              onChange={(e) => setMonto(e.target.value)}
-              style={styles.input}
-            />
-          </div>
-
-          {/* BOTÓN */}
-          <div style={styles.buttonBox}>
-            <button onClick={aplicarGasto} style={styles.button}>
-              ➖ Registrar gasto
-            </button>
-          </div>
-
-        </div>
-
+        ))}
       </div>
-
-      {/* LISTA DE GASTOS */}
-      <h3 style={{ marginTop: 20 }}>📜 Historial de gastos</h3>
-
-      {gastos.length === 0 && (
-        <p style={{ color: "#6b7280" }}>
-          No hay gastos registrados aún
-        </p>
-      )}
-
-      {gastos.map((g) => (
-        <div key={g.id} style={styles.card}>
-          <div style={styles.row}>
-            <b>🧾 {g.nombre}</b>
-            <span style={styles.monto}>- S/ {g.monto}</span>
-          </div>
-
-          <div style={styles.fecha}>
-            📅 {new Date(g.created_at).toLocaleString()}
-          </div>
-        </div>
-      ))}
     </div>
   )
 }

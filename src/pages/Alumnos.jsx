@@ -9,6 +9,24 @@ export default function Alumnos() {
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState("todos")
 
+  /* =========================
+     ✅ RESPONSIVE
+  ========================= */
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  )
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+
+    window.addEventListener("resize", handleResize)
+
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
+  const isMobile = windowWidth <= 600
+  const isTablet = windowWidth > 600 && windowWidth <= 900
+
   const load = async () => {
     const { data } = await supabase
       .from("alumnos")
@@ -130,19 +148,58 @@ export default function Alumnos() {
   })
 
   return (
-    <div style={styles.container}>
-      <h1 style={{ marginBottom: 10 }}>👨‍🎓 Alumnos</h1>
+    <div
+      style={{
+        ...styles.container,
+        padding: isMobile ? 12 : isTablet ? 16 : 20,
+        minHeight: "100vh",
+        boxSizing: "border-box",
+      }}
+    >
+      <h1
+        style={{
+          marginBottom: 10,
+          fontSize: isMobile ? 24 : 32,
+          lineHeight: 1.2,
+        }}
+      >
+        👨‍🎓 Alumnos
+      </h1>
 
       {/* FILTROS */}
-      <div style={styles.filters}>
+      <div
+        style={{
+          ...styles.filters,
+          width: "100%",
+        }}
+      >
         <input
           placeholder="🔎 Buscar alumno..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={styles.search}
+          style={{
+            ...styles.search,
+            width: "100%",
+            boxSizing: "border-box",
+            fontSize: isMobile ? 14 : 15,
+          }}
         />
 
-        <div style={styles.filterButtons}>
+        <div
+          style={{
+            ...styles.filterButtons,
+            ...(isMobile
+              ? {
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 8,
+                  width: "100%",
+                }
+              : {
+                  flexWrap: "wrap",
+                }),
+          }}
+        >
           {["todos", "con", "sin", "riesgo"].map((f) => (
             <button
               key={f}
@@ -151,6 +208,8 @@ export default function Alumnos() {
                 ...styles.filterBtn,
                 background: filter === f ? "#111827" : "white",
                 color: filter === f ? "white" : "#111827",
+                width: isMobile ? "100%" : "auto",
+                whiteSpace: "nowrap",
               }}
             >
               {f === "todos"
@@ -166,16 +225,44 @@ export default function Alumnos() {
       </div>
 
       {/* FORM */}
-      <div style={styles.formCard}>
+      <div
+        style={{
+          ...styles.formCard,
+          padding: isMobile ? 14 : 18,
+        }}
+      >
         
         <div style={styles.formHeader}>
-          <h3 style={{ margin: 0 }}>➕ Crear alumno</h3>
-          <span style={styles.formHint}>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: isMobile ? 17 : 20,
+            }}
+          >
+            ➕ Crear alumno
+          </h3>
+          <span
+            style={{
+              ...styles.formHint,
+              display: "block",
+              marginTop: 4,
+              lineHeight: 1.4,
+            }}
+          >
             Completa los datos para registrar un nuevo alumno
           </span>
         </div>
 
-        <div style={styles.formGrid}>
+        <div
+          style={{
+            ...styles.formGrid,
+            gridTemplateColumns: isMobile
+              ? "1fr"
+              : isTablet
+              ? "1fr 1fr"
+              : "2fr 1fr auto",
+          }}
+        >
 
           {/* NOMBRE */}
           <div style={styles.field}>
@@ -184,7 +271,11 @@ export default function Alumnos() {
               placeholder="Nombre alumno"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              style={styles.input}
+              style={{
+                ...styles.input,
+                width: "100%",
+                boxSizing: "border-box",
+              }}
             />
           </div>
 
@@ -196,15 +287,28 @@ export default function Alumnos() {
               placeholder="0"
               value={saldo}
               onChange={(e) => setSaldo(e.target.value)}
-              style={styles.input}
+              style={{
+                ...styles.input,
+                width: "100%",
+                boxSizing: "border-box",
+              }}
             />
           </div>
 
           {/* BOTÓN */}
-          <div style={styles.buttonBox}>
+          <div
+            style={{
+              ...styles.buttonBox,
+              gridColumn: isMobile || isTablet ? "1 / -1" : "auto",
+              width: "100%",
+            }}
+          >
             <button
               onClick={crearAlumno}
-              style={styles.createBtn}
+              style={{
+                ...styles.createBtn,
+                width: isMobile || isTablet ? "100%" : "auto",
+              }}
             >
               ➕ Agregar Alumno
             </button>
@@ -227,13 +331,35 @@ export default function Alumnos() {
                 ...styles.card,
                 background: theme.bg,
                 borderLeft: `6px solid ${theme.border}`,
+                padding: isMobile ? 14 : 16,
+                boxSizing: "border-box",
               }}
             >
 
-              <div style={styles.header}>
-                <div>
-                  <div style={styles.name}>{a.nombre}</div>
-                  <div style={styles.saldo}>
+              <div
+                style={{
+                  ...styles.header,
+                  flexDirection: isMobile ? "column" : "row",
+                  gap: isMobile ? 10 : 0,
+                  alignItems: isMobile ? "flex-start" : "flex-start",
+                }}
+              >
+                <div style={{ width: "100%" }}>
+                  <div
+                    style={{
+                      ...styles.name,
+                      fontSize: isMobile ? 16 : 18,
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {a.nombre}
+                  </div>
+                  <div
+                    style={{
+                      ...styles.saldo,
+                      fontSize: isMobile ? 13 : 14,
+                    }}
+                  >
                     💰 Saldo: <b>S/ {saldoFinal}</b>
                   </div>
                 </div>
@@ -243,17 +369,25 @@ export default function Alumnos() {
                   background: "#ffffff90",
                   color: theme.border,
                   border: `1px solid ${theme.border}`,
+                  alignSelf: isMobile ? "flex-start" : "auto",
+                  whiteSpace: "nowrap",
                 }}>
                   {getEstadoLabel(estado)}
                 </div>
               </div>
 
-              <div style={styles.footer}>
+              <div
+                style={{
+                  ...styles.footer,
+                  justifyContent: isMobile ? "stretch" : "flex-end",
+                }}
+              >
                 <button
                   onClick={() => agregarSaldo(a.id)}
                   style={{
                     ...styles.addBtn,
                     background: theme.btn,
+                    width: isMobile ? "100%" : "auto",
                   }}
                 >
                   + Agregar saldo

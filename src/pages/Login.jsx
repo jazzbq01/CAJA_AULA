@@ -50,7 +50,11 @@ export default function Login() {
         />
 
         <button
-          style={styles.button}
+          style={{
+            ...styles.button,
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
           onClick={handleLogin}
           disabled={loading}
         >
@@ -64,53 +68,66 @@ export default function Login() {
 
 const styles = {
   container: {
-    height: "100vh",
+    minHeight: "100vh",
+    width: "100%",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     background: "linear-gradient(135deg, #0f172a, #1e293b)",
+    padding: 16,
+    boxSizing: "border-box",
+    overflowX: "hidden",
   },
 
   card: {
-    width: 320,
+    width: "100%",
+    maxWidth: 360,
     background: "white",
-    padding: 25,
+    padding: "25px 20px",
     borderRadius: 12,
     boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
     display: "flex",
     flexDirection: "column",
     gap: 12,
+    boxSizing: "border-box",
   },
 
   title: {
     margin: 0,
-    fontSize: 22,
+    fontSize: "clamp(20px, 5vw, 22px)",
     textAlign: "center",
+    lineHeight: 1.2,
   },
 
   subtitle: {
     margin: 0,
-    fontSize: 12,
+    fontSize: "clamp(12px, 3.5vw, 13px)",
     textAlign: "center",
     color: "#6b7280",
     marginBottom: 10,
+    lineHeight: 1.4,
   },
 
   input: {
+    width: "100%",
     padding: 12,
     borderRadius: 8,
     border: "1px solid #ddd",
     outline: "none",
     fontSize: 14,
+    boxSizing: "border-box",
   },
 
   button: {
+    width: "100%",
     padding: 12,
+    minHeight: 44,
     borderRadius: 8,
     border: "none",
     background: "#2563eb",
     color: "white",
     fontWeight: "bold",
     cursor: "pointer",
+    boxSizing: "border-box",
   },
 }

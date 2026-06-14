@@ -35,6 +35,7 @@ export default function TesoreriaActividades() {
 
   const esMovil = anchoPantalla < 640
   const esTablet = anchoPantalla >= 640 && anchoPantalla < 1024
+  const esDesktop = anchoPantalla >= 1024
 
   const columnasActividades = esMovil
     ? "1fr"
@@ -811,257 +812,203 @@ export default function TesoreriaActividades() {
     <div
       style={{
         ...styles.container,
-        padding: esMovil ? 12 : 20
+        padding: esMovil ? 12 : esTablet ? 16 : 20,
+        boxSizing: "border-box",
+        overflowX: "hidden",
+        minHeight: "100vh",
+        background: "#f4f6fb"
       }}
     >
 
       <div
         style={{
-          ...styles.header,
-          flexDirection: esMovil ? "column" : "row",
-          alignItems: esMovil ? "flex-start" : "center"
+          ...styles.pageWrapper,
+          maxWidth: esDesktop ? 1200 : "100%",
+          margin: "0 auto",
+          width: "100%",
+          boxSizing: "border-box"
         }}
       >
-        <div>
-          <h1
+
+        <div
+          style={{
+            ...styles.header,
+            flexDirection: esMovil ? "column" : "row",
+            alignItems: esMovil ? "flex-start" : "center"
+          }}
+        >
+          <div
             style={{
-              ...styles.title,
-              fontSize: esMovil ? 26 : 30
+              minWidth: 0,
+              width: esMovil ? "100%" : "auto"
             }}
           >
-            💳 Tesorería
-          </h1>
-          <p style={styles.subtitle}>Gestión principal de actividades</p>
+            <h1
+              style={{
+                ...styles.title,
+                fontSize: esMovil ? 26 : esTablet ? 28 : 30,
+                lineHeight: 1.15,
+                wordBreak: "break-word"
+              }}
+            >
+              💳 Tesorería
+            </h1>
+            <p
+              style={{
+                ...styles.subtitle,
+                fontSize: esMovil ? 14 : 16,
+                lineHeight: 1.4
+              }}
+            >
+              Gestión principal de actividades
+            </p>
+          </div>
+
+          <div
+            style={{
+              ...styles.headerBadge,
+              alignSelf: esMovil ? "flex-start" : "center",
+              fontSize: esMovil ? 13 : 14
+            }}
+          >
+            {actividades.length} actividad{actividades.length === 1 ? "" : "es"}
+          </div>
         </div>
 
         <div
           style={{
-            ...styles.headerBadge,
-            alignSelf: esMovil ? "flex-start" : "center"
+            ...styles.formCard,
+            padding: esMovil ? 14 : esTablet ? 18 : 20,
+            boxSizing: "border-box"
           }}
         >
-          {actividades.length} actividad{actividades.length === 1 ? "" : "es"}
-        </div>
-      </div>
+          <div style={styles.formHeader}>
+            <div>
+              <h2
+                style={{
+                  ...styles.formTitle,
+                  fontSize: esMovil ? 18 : 20,
+                  lineHeight: 1.2
+                }}
+              >
+                Agregar actividad
+              </h2>
+              <p
+                style={{
+                  ...styles.formSubtitle,
+                  fontSize: esMovil ? 13 : 14,
+                  lineHeight: 1.4
+                }}
+              >
+                Registra una actividad para luego agregar sus ingresos y gastos.
+              </p>
+            </div>
+          </div>
 
-      <div style={styles.formCard}>
-        <div style={styles.formHeader}>
+          <div
+            style={{
+              ...styles.formRow,
+              flexDirection: esMovil ? "column" : "row"
+            }}
+          >
+            <input
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Ejemplo: Día de la Madre"
+              style={{
+                ...styles.input,
+                width: esMovil ? "100%" : "auto",
+                boxSizing: "border-box",
+                minWidth: 0
+              }}
+            />
+
+            <button
+              onClick={crearActividad}
+              disabled={loading}
+              style={{
+                ...styles.button,
+                width: esMovil ? "100%" : "auto",
+                minHeight: esMovil ? 42 : "auto",
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? "not-allowed" : "pointer"
+              }}
+            >
+              {loading ? "Guardando..." : "➕ Agregar"}
+            </button>
+          </div>
+        </div>
+
+        <div style={styles.listHeader}>
           <div>
-            <h2 style={styles.formTitle}>Agregar actividad</h2>
-            <p style={styles.formSubtitle}>
-              Registra una actividad para luego agregar sus ingresos y gastos.
+            <h2
+              style={{
+                ...styles.sectionTitle,
+                fontSize: esMovil ? 20 : 22,
+                lineHeight: 1.2
+              }}
+            >
+              Actividades registradas
+            </h2>
+            <p
+              style={{
+                ...styles.listSubtitle,
+                fontSize: esMovil ? 13 : 14,
+                lineHeight: 1.4
+              }}
+            >
+              Selecciona una actividad para ver o registrar sus detalles.
             </p>
           </div>
         </div>
 
         <div
           style={{
-            ...styles.formRow,
-            flexDirection: esMovil ? "column" : "row"
+            ...styles.grid,
+            gridTemplateColumns: columnasActividades
           }}
         >
-          <input
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Ejemplo: Día de la Madre"
-            style={{
-              ...styles.input,
-              width: esMovil ? "100%" : "auto",
-              boxSizing: "border-box"
-            }}
-          />
-
-          <button
-            onClick={crearActividad}
-            disabled={loading}
-            style={{
-              ...styles.button,
-              width: esMovil ? "100%" : "auto",
-              opacity: loading ? 0.7 : 1,
-              cursor: loading ? "not-allowed" : "pointer"
-            }}
-          >
-            {loading ? "Guardando..." : "➕ Agregar"}
-          </button>
-        </div>
-      </div>
-
-      <div style={styles.listHeader}>
-        <div>
-          <h2 style={styles.sectionTitle}>Actividades registradas</h2>
-          <p style={styles.listSubtitle}>
-            Selecciona una actividad para ver o registrar sus detalles.
-          </p>
-        </div>
-      </div>
-
-      <div
-        style={{
-          ...styles.grid,
-          gridTemplateColumns: columnasActividades
-        }}
-      >
-        {actividades.length === 0 && (
-          <div
-            style={{
-              ...styles.empty,
-              gridColumn: "1 / -1"
-            }}
-          >
-            No hay actividades registradas.
-          </div>
-        )}
-
-        {actividades.map((a) => {
-          const estadoStyle = getEstadoStyle(a.estado)
-          const estaFinalizada = a.estado === "FINALIZADO"
-
-          return (
+          {actividades.length === 0 && (
             <div
-              key={a.id}
               style={{
-                ...styles.card,
-                borderLeft: `7px solid ${estadoStyle.accent}`
+                ...styles.empty,
+                gridColumn: "1 / -1"
               }}
             >
-              {editandoId === a.id && !estaFinalizada ? (
-                <div style={styles.editBox}>
-                  <label style={styles.editLabel}>Editar nombre de actividad</label>
+              No hay actividades registradas.
+            </div>
+          )}
 
-                  <input
-                    value={nombreEditado}
-                    onChange={(e) => setNombreEditado(e.target.value)}
-                    style={{
-                      ...styles.input,
-                      width: "100%",
-                      boxSizing: "border-box"
-                    }}
-                    placeholder="Nombre de la actividad"
-                  />
+          {actividades.map((a) => {
+            const estadoStyle = getEstadoStyle(a.estado)
+            const estaFinalizada = a.estado === "FINALIZADO"
 
-                  <div
-                    style={{
-                      ...styles.actions,
-                      width: esMovil ? "100%" : "auto"
-                    }}
-                  >
-                    <button
-                      onClick={() => guardarEdicion(a.id)}
+            return (
+              <div
+                key={a.id}
+                style={{
+                  ...styles.card,
+                  borderLeft: `7px solid ${estadoStyle.accent}`,
+                  padding: esMovil ? 14 : 18,
+                  minHeight: esMovil ? "auto" : 260,
+                  boxSizing: "border-box",
+                  overflow: "hidden"
+                }}
+              >
+                {editandoId === a.id && !estaFinalizada ? (
+                  <div style={styles.editBox}>
+                    <label style={styles.editLabel}>Editar nombre de actividad</label>
+
+                    <input
+                      value={nombreEditado}
+                      onChange={(e) => setNombreEditado(e.target.value)}
                       style={{
-                        ...styles.saveBtn,
-                        flex: esMovil ? 1 : "initial"
-                      }}
-                    >
-                      💾 Guardar
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setEditandoId(null)
-                        setNombreEditado("")
-                      }}
-                      style={{
-                        ...styles.cancelBtn,
-                        flex: esMovil ? 1 : "initial"
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div
-                    style={{
-                      ...styles.cardTop,
-                      flexDirection: esMovil ? "column" : "row"
-                    }}
-                  >
-                    <div style={{ width: esMovil ? "100%" : "auto" }}>
-                      <h3 style={styles.cardTitle}>{a.nombre}</h3>
-
-                      <div style={styles.badgeRow}>
-                        <span
-                          style={{
-                            ...styles.estadoBadge,
-                            color: estadoStyle.color,
-                            background: estadoStyle.background,
-                            borderColor: estadoStyle.border
-                          }}
-                        >
-                          {estadoStyle.label}
-                        </span>
-
-                        {estaFinalizada ? (
-                          <span style={styles.lockBadge}>Solo lectura</span>
-                        ) : (
-                          <span style={styles.draftBadge}>Editable</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        ...styles.saldoBox,
-                        width: esMovil ? "100%" : "auto",
-                        textAlign: esMovil ? "left" : "right",
+                        ...styles.input,
+                        width: "100%",
                         boxSizing: "border-box"
                       }}
-                    >
-                      <span style={styles.saldoLabel}>Saldo final</span>
-                      <strong style={styles.saldoValue}>
-                        S/ {Number(a.saldo_final || 0).toFixed(2)}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      ...styles.infoGrid,
-                      gridTemplateColumns: columnasInfo
-                    }}
-                  >
-                    <div style={styles.infoBox}>
-                      <span style={styles.infoLabel}>Ingresos</span>
-                      <b style={styles.infoValueGreen}>
-                        S/ {Number(a.total_ingresos || 0).toFixed(2)}
-                      </b>
-                    </div>
-
-                    <div style={styles.infoBox}>
-                      <span style={styles.infoLabel}>Gastos</span>
-                      <b style={styles.infoValueRed}>
-                        S/ {Number(a.total_gastos || 0).toFixed(2)}
-                      </b>
-                    </div>
-
-                    <div style={styles.infoBox}>
-                      <span style={styles.infoLabel}>Caja chica</span>
-                      <b style={styles.infoValue}>
-                        S/ {Number(a.total_caja_chica || 0).toFixed(2)}
-                      </b>
-                    </div>
-
-                    <div style={styles.infoBox}>
-                      <span style={styles.infoLabel}>Fecha inicio</span>
-                      <b style={styles.infoValue}>
-                        {formatearFecha(a.fecha_inicio || a.created_at)}
-                      </b>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      ...styles.cardFooter,
-                      flexDirection: esMovil ? "column" : "row",
-                      alignItems: esMovil ? "stretch" : "center"
-                    }}
-                  >
-                    <div style={styles.helperText}>
-                      {estaFinalizada
-                        ? "Actividad finalizada. Solo puedes ver el detalle o descargar el reporte."
-                        : "Actividad en borrador. Puedes editarla, eliminarla o agregar detalles."}
-                    </div>
+                      placeholder="Nombre de la actividad"
+                    />
 
                     <div
                       style={{
@@ -1070,60 +1017,216 @@ export default function TesoreriaActividades() {
                       }}
                     >
                       <button
-                        onClick={() => navigate(`/tesoreria/${a.id}`)}
+                        onClick={() => guardarEdicion(a.id)}
                         style={{
-                          ...styles.detailBtn,
-                          flex: esMovil ? 1 : "initial"
+                          ...styles.saveBtn,
+                          flex: esMovil ? 1 : "initial",
+                          minHeight: esMovil ? 40 : "auto"
                         }}
                       >
-                        👁 Ver detalle
+                        💾 Guardar
                       </button>
 
-                      {estaFinalizada ? (
-                        <button
-                          onClick={() => descargarPdf(a)}
-                          disabled={generandoPdfId === a.id}
-                          style={{
-                            ...styles.pdfBtn,
-                            flex: esMovil ? 1 : "initial",
-                            opacity: generandoPdfId === a.id ? 0.7 : 1,
-                            cursor: generandoPdfId === a.id ? "not-allowed" : "pointer"
-                          }}
-                        >
-                          {generandoPdfId === a.id
-                            ? "Generando..."
-                            : "📄 Descargar PDF"}
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => iniciarEdicion(a)}
-                            style={{
-                              ...styles.editBtn,
-                              flex: esMovil ? 1 : "initial"
-                            }}
-                          >
-                            ✏️ Editar
-                          </button>
-
-                          <button
-                            onClick={() => eliminarActividad(a)}
-                            style={{
-                              ...styles.deleteBtn,
-                              flex: esMovil ? 1 : "initial"
-                            }}
-                          >
-                            🗑 Eliminar
-                          </button>
-                        </>
-                      )}
+                      <button
+                        onClick={() => {
+                          setEditandoId(null)
+                          setNombreEditado("")
+                        }}
+                        style={{
+                          ...styles.cancelBtn,
+                          flex: esMovil ? 1 : "initial",
+                          minHeight: esMovil ? 40 : "auto"
+                        }}
+                      >
+                        Cancelar
+                      </button>
                     </div>
                   </div>
-                </>
-              )}
-            </div>
-          )
-        })}
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        ...styles.cardTop,
+                        flexDirection: esMovil ? "column" : "row"
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: esMovil ? "100%" : "auto",
+                          minWidth: 0
+                        }}
+                      >
+                        <h3
+                          style={{
+                            ...styles.cardTitle,
+                            fontSize: esMovil ? 18 : 21,
+                            lineHeight: 1.25
+                          }}
+                        >
+                          {a.nombre}
+                        </h3>
+
+                        <div style={styles.badgeRow}>
+                          <span
+                            style={{
+                              ...styles.estadoBadge,
+                              color: estadoStyle.color,
+                              background: estadoStyle.background,
+                              borderColor: estadoStyle.border
+                            }}
+                          >
+                            {estadoStyle.label}
+                          </span>
+
+                          {estaFinalizada ? (
+                            <span style={styles.lockBadge}>Solo lectura</span>
+                          ) : (
+                            <span style={styles.draftBadge}>Editable</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          ...styles.saldoBox,
+                          width: esMovil ? "100%" : "auto",
+                          textAlign: esMovil ? "left" : "right",
+                          boxSizing: "border-box"
+                        }}
+                      >
+                        <span style={styles.saldoLabel}>Saldo final</span>
+                        <strong
+                          style={{
+                            ...styles.saldoValue,
+                            fontSize: esMovil ? 18 : 20
+                          }}
+                        >
+                          S/ {Number(a.saldo_final || 0).toFixed(2)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        ...styles.infoGrid,
+                        gridTemplateColumns: columnasInfo
+                      }}
+                    >
+                      <div style={styles.infoBox}>
+                        <span style={styles.infoLabel}>Ingresos</span>
+                        <b style={styles.infoValueGreen}>
+                          S/ {Number(a.total_ingresos || 0).toFixed(2)}
+                        </b>
+                      </div>
+
+                      <div style={styles.infoBox}>
+                        <span style={styles.infoLabel}>Gastos</span>
+                        <b style={styles.infoValueRed}>
+                          S/ {Number(a.total_gastos || 0).toFixed(2)}
+                        </b>
+                      </div>
+
+                      <div style={styles.infoBox}>
+                        <span style={styles.infoLabel}>Caja chica</span>
+                        <b style={styles.infoValue}>
+                          S/ {Number(a.total_caja_chica || 0).toFixed(2)}
+                        </b>
+                      </div>
+
+                      <div style={styles.infoBox}>
+                        <span style={styles.infoLabel}>Fecha inicio</span>
+                        <b style={styles.infoValue}>
+                          {formatearFecha(a.fecha_inicio || a.created_at)}
+                        </b>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        ...styles.cardFooter,
+                        flexDirection: esMovil ? "column" : "row",
+                        alignItems: esMovil ? "stretch" : "center"
+                      }}
+                    >
+                      <div
+                        style={{
+                          ...styles.helperText,
+                          width: esMovil ? "100%" : "auto",
+                          lineHeight: 1.4
+                        }}
+                      >
+                        {estaFinalizada
+                          ? "Actividad finalizada. Solo puedes ver el detalle o descargar el reporte."
+                          : "Actividad en borrador. Puedes editarla, eliminarla o agregar detalles."}
+                      </div>
+
+                      <div
+                        style={{
+                          ...styles.actions,
+                          width: esMovil ? "100%" : "auto"
+                        }}
+                      >
+                        <button
+                          onClick={() => navigate(`/tesoreria/${a.id}`)}
+                          style={{
+                            ...styles.detailBtn,
+                            flex: esMovil ? 1 : "initial",
+                            minHeight: esMovil ? 40 : "auto"
+                          }}
+                        >
+                          👁 Ver detalle
+                        </button>
+
+                        {estaFinalizada ? (
+                          <button
+                            onClick={() => descargarPdf(a)}
+                            disabled={generandoPdfId === a.id}
+                            style={{
+                              ...styles.pdfBtn,
+                              flex: esMovil ? 1 : "initial",
+                              minHeight: esMovil ? 40 : "auto",
+                              opacity: generandoPdfId === a.id ? 0.7 : 1,
+                              cursor: generandoPdfId === a.id ? "not-allowed" : "pointer"
+                            }}
+                          >
+                            {generandoPdfId === a.id
+                              ? "Generando..."
+                              : "📄 Descargar PDF"}
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => iniciarEdicion(a)}
+                              style={{
+                                ...styles.editBtn,
+                                flex: esMovil ? 1 : "initial",
+                                minHeight: esMovil ? 40 : "auto"
+                              }}
+                            >
+                              ✏️ Editar
+                            </button>
+
+                            <button
+                              onClick={() => eliminarActividad(a)}
+                              style={{
+                                ...styles.deleteBtn,
+                                flex: esMovil ? 1 : "initial",
+                                minHeight: esMovil ? 40 : "auto"
+                              }}
+                            >
+                              🗑 Eliminar
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
       </div>
 
     </div>
@@ -1133,6 +1236,10 @@ export default function TesoreriaActividades() {
 const styles = {
   container: {
     fontFamily: "Arial"
+  },
+
+  pageWrapper: {
+    width: "100%"
   },
 
   header: {
